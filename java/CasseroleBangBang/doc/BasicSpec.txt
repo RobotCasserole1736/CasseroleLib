@@ -1,0 +1,1 @@
+Create a basic bang-bang controler (simple, no-tune control). should align in interface with the CasserolePID controller. Specs to come!

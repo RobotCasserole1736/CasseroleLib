@@ -1,0 +1,4 @@
+No license has been found for FalconPathPlanner
+
+Source: (last checked May 10 2016)
+https://github.com/KHEngineering/SmoothPathPlanner

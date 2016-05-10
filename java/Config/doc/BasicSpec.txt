@@ -1,0 +1,1 @@
+Need to write a class to define a configuration class for reading a configuration file and setting sw values at specific times. Specs to come.
