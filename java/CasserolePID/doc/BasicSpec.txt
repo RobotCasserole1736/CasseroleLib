@@ -1,3 +1,0 @@
-Need to write a proper PID library that we control.
-
-Specs to come.
