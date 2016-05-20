@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.usfirst.frc.team1736.robot;
 
 import java.util.Arrays;
@@ -8,11 +5,22 @@ import java.util.TimerTask;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.SPI;
+  
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+//
+// DESCRIPTION:  Driver for Adafruit APA102 DotStar LED strips. Maintains an
+//                 internal buffer of all LED data, and periodically sends 
+//                 it off to the data over the SPI bus.
+//
+// USAGE: 1) Instantiate Class, with number of LEDS in strip. This will start
+//             periodic updates to the LED's in the background
+//        2) Call color classes to change led colors. Changes are automatically
+//             pushed out to the strip.
+//
+///////////////////////////////////////////////////////////////////////////////
 
-/**
- * @author gerthcm
- *
- */
 public class DotStarsLEDStrip {
 	//Datasheet - https://www.adafruit.com/datasheets/APA102.pdf
 	
@@ -30,7 +38,7 @@ public class DotStarsLEDStrip {
 	
 	//Offsets within the stream
 	static int globalOffset = 0;
-	static int blueOffset = 2; //Note that green/blue are inverted from wh at the dtatsheet says they should be
+	static int blueOffset = 2; //Note that green/blue are inverted from what the datasheet says they should be
 	static int greenOffset = 1;
 	static int redOffset = 3;	
 	static int bytesPerLED = 4;
@@ -52,20 +60,12 @@ public class DotStarsLEDStrip {
 	//State variables
 	boolean newBuffer; //true when the ledBuffer has been updated since the last time it was written to the LEDs
 	
-	//Audio Input
-	AnalogInput audioIn;
-	private static final int AUDIO_IN_PORT = 2;
-	//scale/offset for microphone input
-	private final double AUDIO_MIN_V = 0.2;
-	private final double AUDIO_MAX_V = 3.0;
 	
 	/**
 	 * Constructor for led strip class
 	 * @param numLEDs - number of LED's in the total strip.
 	 */
 	DotStarsLEDStrip(int numLEDs){
-		//Initalize the audio input
-		audioIn = new AnalogInput(AUDIO_IN_PORT);
 		
 		//Number of bytes in color buffer needed - each LED has 4 bytes (1 brightness, then 1 for RGB each),
 		// plus the start and end frame.
@@ -163,16 +163,6 @@ public class DotStarsLEDStrip {
 		newBuffer = true;
 		//we're done!
 		return;
-	}
-	
-	/**
-	 * Returns the current volume of sound outside the robot in a range of 0 to 1
-	 * where 0 is the quietest and 1 is the loudest
-	 * @return
-	 */
-	
-	public double getAudioLevel(){
-		return Math.min(1, Math.max(((audioIn.getVoltage() - AUDIO_MIN_V) / (AUDIO_MAX_V-AUDIO_MIN_V)),0));
 	}
 	
 	/**

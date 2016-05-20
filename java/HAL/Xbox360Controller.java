@@ -4,16 +4,25 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Joystick.RumbleType;
 
 public class Xbox360Controller {
+    
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+//
+// DESCRIPTION:  This class was created purely in an effort to make controller calls
+//                less clunky overall. Not terribly useful, but hopefully way easier than
+//                typing out a super long string every time you want to call a controller
+//                button.
+//                
+//                I don't want to put "get" in front of my methods because that'll 
+//                make the calls ever so slightly longer, so I won't. As Chris 
+//                says, "If later we don't like it, we'll change it."
+//
+// USAGE: 1) Instantiate Class
+//        2) Call methods to read from controller.
+//
+///////////////////////////////////////////////////////////////////////////////
 	
-	/*This class was created purely in an effort to make controller calls
-	 * less clunky overall. Not terribly useful, but hopefully way easier than
-	 * typing out a super long string every time you want to call a controller
-	 * button.
-	 * 
-	 * I don't want to put "get" in front of my methods because that'll make the calls
-	 * ever so slightly longer, so I won't. As Chris says, "If later we don't like it,
-	 * we'll change it."
-	 */
 	
 	//Xbox Controller 2015 (Zero Based (I think)) Constants
 	//-Controller Buttons

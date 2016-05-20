@@ -16,7 +16,10 @@
 //        the gyro value to calculate an angle. Class-private variables are 
 //        updated by this function. 
 //
-//
+// USAGE: 1) Instantiate Class. This will start periodic reads from the sensor
+//             in the background.
+//        2) When needed, call the read methods to get the most recent angle or
+//             rotational rate reading from the sensor.
 //
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -3,6 +3,27 @@ package org.usfirst.frc.team1736.robot;
 import java.util.Timer;
 import java.util.TimerTask;
 
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+//
+// DESCRIPTION:  Battery parameter estimator - calculates an estimate for a 
+//                battery's open circuit voltage (Voc) and equivalent series 
+//                resistance (ESR) based on a windows of system current/voltage 
+//                measurements. Ensures enough spread in the measurement window to
+//                ensure confidence in the estimate. Based on a whitepaper detailing
+//                an algorithm developed for the 2016 FRC season by FRC1736 
+//                RobotCasserole.
+//
+// USAGE: 1) Instantiate Class
+//        2) Override the returnPIDInput() to provide the feedback from the system
+//             being controlled.
+//        3) Override usePIDOutput() to provide control inputs to the system 
+//             being controlled.
+//        4) Set gains and any other options needed for algorithm.
+//        4) Call start() method to being running PID calculations.
+//
+///////////////////////////////////////////////////////////////////////////////
 
 public abstract class CasserolePID {
 

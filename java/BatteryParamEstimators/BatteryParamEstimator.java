@@ -1,14 +1,27 @@
 package org.usfirst.frc.team1736.robot;
 
 import java.util.Arrays;
-/**
- * Battery parameter estimator - calculates an estimate for a battery's open circuit voltage (Voc) and
- * equivilant series resistance (ESR) based on a windows of system current/voltage measurements.
- * Ensures enough spread in the measurement window to ensure confidence in the estimate. Based on a 
- * whitepaper detailing an algorithm developed for the 2016 FRC season by FRC1736 RobotCasserole.
- * @author Chris Gerth
- *
- */
+
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+//
+// DESCRIPTION:  Battery parameter estimator - calculates an estimate for a 
+//                battery's open circuit voltage (Voc) and equivilant series 
+//                resistance (ESR) based on a windows of system current/voltage 
+//                measurements. Ensures enough spread in the measurement window to
+//                ensure confidence in the estimate. Based on a whitepaper detailing
+//                an algorithm developed for the 2016 FRC season by FRC1736 
+//                RobotCasserole.
+//
+// USAGE: 1) Instantiate Class
+//        2) Once per periodic loop, call the updateEstimate() method to calculate
+//             a new paramater estimate
+//        3) After updateEstimate(), call the other getters to utilize the estimated
+//             parameters.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 public class BatteryParamEstimator {
 
 	static double VocEstInit = 13;

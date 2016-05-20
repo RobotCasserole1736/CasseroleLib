@@ -3,11 +3,29 @@ package org.usfirst.frc.team1736.robot;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port;
 
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+//
+// CLASS NAME: TCS34725ColorSensor
+// DESCRIPTION: Simple API for the TCS34725 color sensor from adafruit
+//              Provides interfacing for initializing the sensor and performing 
+//                qualified reads of color values.
+//              Coded with lots and lots of help from https://github.com/adafruit/Adafruit_TCS34725. 
+//              Thanks KTOWN!!! If I ever meet you, I owe you a drink.
+//
+// USAGE: 1) Instantiate Class
+//        2) Call init() once to set up the sensor
+//        3) Once per periodic loop, call the readColors() method to get data
+//              from the sensor.
+//        4) After the readColors() call, use the getCOLOR() methods to access
+//              the most recent color readings (RGBC) from the sensor.
+//
+//
+///////////////////////////////////////////////////////////////////////////////
+
 /**
- * TCS34725ColorSensor - Simple API for the TCS34725 color sensor from adafruit
- * Provides interfacing for initializing the sensor and performing qualified reads of color values.
- * Coded with lots and lots of help from https://github.com/adafruit/Adafruit_TCS34725. 
- * Thanks KTOWN!!! If I ever meet you, I owe you a beer.
+ * TCS34725ColorSensor - 
  * @author Chris Gerth
  *
  */
