@@ -1,12 +1,21 @@
-/**
- * 
- */
-package org.usfirst.frc.team1736.robot;
+package lib.SignalMath;
 
 import edu.wpi.first.wpilibj.Timer;
 
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. See the License file. 
+//
+// Can you use this code? Sure! We're releasing this under GNUV3, which 
+// basically says you can take, modify, share, publish this as much as you
+// want, as long as you don't make it closed source.
+//
+// If you do find it useful, we'd love to hear about it! Check us out at
+// http://robotcasserole.org/ and leave us a message!
+///////////////////////////////////////////////////////////////////////////////
+
 /**
- * @author gerthcm
+ * Class which implements a simple discrete-time derivative calculation. Output is equal
+ * to the rate of change of the input signal in units of <signal> per second. 
  *
  */
 public class DerivativeCalculator {
@@ -14,9 +23,7 @@ public class DerivativeCalculator {
 	private double prev_signal_val;
 	
 	/**
-	 * Construction - simple class to calculate the derivative of a signal
-	 * Accounts for the fact sample time isn't really constant...
-	 * Note we should have one of these classes per signal we wish to take the derivative of.
+	 * Constructor for derivative calculator. Note that you should instantiate one of these classes per signal we wish to take the derivative of.
 	 */
 	DerivativeCalculator(){
 		prev_time = Timer.getFPGATimestamp();
@@ -24,9 +31,11 @@ public class DerivativeCalculator {
 	}
 	
 	/**
-	 * calcDeriv - given an input value, output its derivative based on the last time the
-	 * method was invoked
-	 * @param in - input to take the derivative of
+	 * Given a new input value, output its derivative based on the last time the
+	 * method was invoked. The idea is you would read a signal, then call this method
+     * with this new signal value, so you have the derivative right there. Then use it 
+     * later on.
+	 * @param in input to take the derivative of
 	 * @return the derivative of the signal "in" in units of in/sec.
 	 */
 	public double calcDeriv(double in){

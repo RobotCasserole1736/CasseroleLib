@@ -1,11 +1,21 @@
-package org.usfirst.frc.team1736.robot;
+package lib.SignalMath;
 
 import java.util.Arrays;
 
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. See the License file. 
+//
+// Can you use this code? Sure! We're releasing this under GNUV3, which 
+// basically says you can take, modify, share, publish this as much as you
+// want, as long as you don't make it closed source.
+//
+// If you do find it useful, we'd love to hear about it! Check us out at
+// http://robotcasserole.org/ and leave us a message!
+///////////////////////////////////////////////////////////////////////////////
+
 /**
- * Averaging Filter - Class which defines a simple average filter. After initilization, the "filter()" method 
+ * Class which implements a simple average filter. After initialization, the "filter()" method 
  * can simply be called with the newest input, and the most recent filtered output will be returned.
- * @author Chris Gerth
  *
  */
 public class AveragingFilter {
@@ -17,9 +27,9 @@ public class AveragingFilter {
 	
 	
 	/**
-	 * init - initialize all things needed for the averaging filter.
-	 * @param length
-	 * @param init_val
+	 * Initialize all things needed for the averaging filter.
+	 * @param length The number of previous points to consider in the averaged output. Larger values will reduce noise more aggressively, but also induce more delay in the signal.
+	 * @param init_val The initial value the filter should output. Usually zero, but might be something else if you know more about your system than we do.
 	 */
 	public AveragingFilter(int length, double init_val){
 		index = 0;
@@ -33,8 +43,8 @@ public class AveragingFilter {
 	}
 	
 	/**
-	 * Filter - add a new input to the filter and get the current output from the filter
-	 * @param input - new value to add to the filter
+	 * Add a new input to the filter and get the current output from the filter
+	 * @param input new value to add to the filter
 	 * @return the present output filtered value
 	 */
 	public double filter(double input){

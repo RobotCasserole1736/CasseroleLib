@@ -1,41 +1,65 @@
-package org.usfirst.frc.team1736.robot;
+package lib.CasserolePID;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import lib.SignalMath;
 
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+// Copyright (c) FRC Team 1736 2016. See the License file. 
+//
+// Can you use this code? Sure! We're releasing this under GNUV3, which 
+// basically says you can take, modify, share, publish this as much as you
+// want, as long as you don't make it closed source.
+//
+// If you do find it useful, we'd love to hear about it! Check us out at
+// http://robotcasserole.org/ and leave us a message!
 ///////////////////////////////////////////////////////////////////////////////
-//
-// DESCRIPTION:  Battery parameter estimator - calculates an estimate for a 
-//                battery's open circuit voltage (Voc) and equivalent series 
-//                resistance (ESR) based on a windows of system current/voltage 
-//                measurements. Ensures enough spread in the measurement window to
-//                ensure confidence in the estimate. Based on a whitepaper detailing
-//                an algorithm developed for the 2016 FRC season by FRC1736 
-//                RobotCasserole.
-//
-// USAGE: 1) Instantiate Class
-//        2) Override the returnPIDInput() to provide the feedback from the system
-//             being controlled.
-//        3) Override usePIDOutput() to provide control inputs to the system 
-//             being controlled.
-//        4) Set gains and any other options needed for algorithm.
-//        4) Call start() method to being running PID calculations.
-//
-///////////////////////////////////////////////////////////////////////////////
+
+/**
+* DESCRIPTION:
+* <br>
+* PID Controller algorithm designed by FRC1736 Robot Casserole. The WPIlib PID
+* library is pretty darn good, but we had some things we wanted done differently.
+* Therefore, we did it ourselves. 
+* <br> 
+* This controller implements a "PIDFdFP2" controller, with a few selectable options.
+* Execution runs at 10ms (2x speed of *periodic() loops from FRC), this will be made 
+* adjustable in the future. Output each loop is simply the sum of each term, with not
+* memory of previous outputs (except in the integral term). Output can be capped to 
+* a specific range, and the integral term can turn itself off when the error is too 
+* big (prevents windup). More features to be added in the future!
+* <br>
+* TERMS IN CALCULATION:
+* <ul>
+* <li><b>Proportional</b> - The error, equal to "setpoint - actual", multiplied by a gain. The simplest form of feedback, should push a system toward the setpoint.</li>
+* <li><b>Integral</b> - The integral of the error over time, multiplied by a gain. Helps with correcting for small errors that exist over longer periods of time, when the P term alone is not sufficient.</li>
+* <li><b>Derivative</b> - The derivative of the error, or of the actual value(user selects), multiplied by a gain. Helps to rate-limit the P term's action to reduce overshoot and increase stability (to a point).</li>
+* <li><b>Feed-Forward</b> - The setpoint, multiplied by a gain. Helps get the system to a zero error state for systems where there is a linear relationship between setpoint and "ideal system" control value (Think shooter wheel - more motor command means more speed. For a speed-based setpoint, there is a linear relationship between control effort (motor command) and setpoint)</li>
+* <li><b>Feed-Forward</b> - The setpoint's derivative, multiplied by a gain. Helps in scenarios where when the setpoint changes, it's useful to give the system a single "knock". Think using a motor to control to a certain angle - you'll need lots of effort when the setpoint first changes, but ideally no effort once you've gotten to the right place.</li>
+* <li><b>Proportional Squared</b> - The error squared but with sign preserved, multiplied by a gain. Helpful in non-linear systems, and when you can afford to be very aggressive when error is large.</li>
+* </ul>
+* USAGE:    
+* <ol>   
+* <li>Create new class as a super of this one</li> 
+* <li>Override methods to set PID output and return feedback to the algorithm.</li> 
+* <li>Call start() method to begin background execution of algorithm.</li>    
+* </ol>
+* 
+* 
+*/
+
 
 public abstract class CasserolePID {
 
 	// PID Gain constants
-	public double Kp;  //Proportional
-	public double Ki;  //Integral
-	public double Kd;  //Derivative
-	public double Kf;  //Setpoint Feed-Forward
-	public double Kdf; //Setpoint Derivative Feed-Forward
-	public double Kp2; //Proportional Squared
+	private double Kp;  //Proportional
+	private double Ki;  //Integral
+	private double Kd;  //Derivative
+	private double Kf;  //Setpoint Feed-Forward
+	private double Kdf; //Setpoint Derivative Feed-Forward
+	private double Kp2; //Proportional Squared
 	
-	public boolean useErrForDerivTerm; //If true, derivative term is calculated using the error signal. Otherwise, use the "actual" value from the PID system.
+	private boolean useErrForDerivTerm; //If true, derivative term is calculated using the error signal. Otherwise, use the "actual" value from the PID system.
 	
 	//Things for doing math
 	DerivativeCalculator dTermDeriv;
@@ -45,10 +69,10 @@ public abstract class CasserolePID {
 	public volatile double setpoint;
 	
 	//Value limiters
-	public double outputMin; //output limit
-	public double outputMax;
+	private double outputMin; //output limit
+	private double outputMax;
 	
-	public double integratorDisableThresh; // If the abs val of the error goes above this, disable and reset the integrator to prevent windup
+	private double integratorDisableThresh; // If the abs val of the error goes above this, disable and reset the integrator to prevent windup
 	
 	//PID Thread
 	private Timer timerThread;
@@ -59,10 +83,15 @@ public abstract class CasserolePID {
 	//Watchdog Counter - counts up every time we run a periodic loop.
 	//An external obesrver can check this for positive verification the
 	//PID loop is still alive.
-	public volatile long watchdogCounter;
+	private volatile long watchdogCounter;
 	
 	
-	//Simple constructor. Makes nice PID easy
+	/**
+	 * Simple Constructor
+	 * @param Kp_in Proportional Term Gain
+     * @param Ki_in Integral Term Gain
+     * @param Kd_in Derivative Term Gain
+	 */
 	CasserolePID(double Kp_in, double Ki_in, double Kd_in){
 		Kp  = Kp_in;
 		Ki  = Ki_in;
@@ -73,7 +102,15 @@ public abstract class CasserolePID {
 		commonConstructor();
 	}
 	
-	//More-things-exposed constructor
+	/**
+	 * More-Complex Constructor
+	 * @param Kp_in Proportional Term Gain
+     * @param Ki_in Integral Term Gain
+     * @param Kd_in Derivative Term Gain
+     * @param Kf_in Setpoint Feed-Forward Term Gain
+     * @param Kdf_in Setpoint Derivative Feed-Forward Term Gain
+     * @param Kp2_in Proportional Squared Term Gain
+	 */
 	CasserolePID(double Kp_in, double Ki_in, double Kd_in, double Kf_in, double Kdf_in, double Kp2_in){
 		Kp  = Kp_in;
 		Ki  = Ki_in;
@@ -104,7 +141,9 @@ public abstract class CasserolePID {
 		
 	}
 	
-	//Start the PID thread
+	/**
+	 * Start the PID thread running. Will begin to call the returnPIDInput and usePIDOutput methods asynchronously.
+	 */
 	public void start(){
 		resetIntegrators();
 		watchdogCounter = 0;
@@ -115,17 +154,23 @@ public abstract class CasserolePID {
         timerThread.scheduleAtFixedRate(new PIDTask(this), 0L, (long) (pidSamplePeriod_ms));
 	}
 	
+	/**
+	 * Stop whatever thread may or may not be running. Will finish the current calculation loop, so returnPIDInput and usePIDOutput might get called one more time after this function gets called.
+	 */
 	public void stop(){
-		//Stop whatever thread may or may not be running
         timerThread.cancel();	
 	}
 	
-	//Reset all internal integrators
+	/**
+	 * Reset all internal integrators back to zero. Useful for returning to init-state conditions.
+	 */
 	public void resetIntegrators(){
 		iTermIntegral.resetIntegral();
 	}
 	
-	//Assign a setpoint. 
+	/**
+	 * Assign a new setpoint for the algorithm to control to. 
+	 */
 	public void setSetpoint(double setpoint_in){
 			setpoint = setpoint_in;	
 	}
@@ -137,7 +182,7 @@ public abstract class CasserolePID {
 	 * For example, when controlling a motor to turn a certain number of rotations, this should return the encoder count
 	 * or number of degrees or something like that. You must implement this! Expect it to be called frequently and
 	 * asynchronously by the underlying PID algorithm. Make sure it runs fast!
-	 * @return
+	 * @return The sensor feedback value for the PID algorithm to use.
 	 */
 	protected abstract double returnPIDInput();
 	
@@ -147,7 +192,7 @@ public abstract class CasserolePID {
 	 * by the underlying PID algorithm. When it is called, you should utilize the value given to do something useful.
 	 * For example, when controlling a motor to turn a certain number of rotations, your implementation of this function
 	 * should send the output of the PID to one of the motor controllers. Make sure it runs fast!
-	 * @return
+     * @param pidOutput The control effort output calculated by the PID algorithm
 	 */
 	protected abstract void usePIDOutput(double pidOutput);
 
@@ -240,18 +285,23 @@ public abstract class CasserolePID {
         }
     }
 	
-	//Nice getters and setters follow
+    /**
+     * Call this method to set up the algorithm to utilize the error between setpoint and actual for the derivative term calculation.
+     */
 	public void setErrorAsDerivTermSrc(){
 		useErrForDerivTerm = true;
 	}
-
+    
+    /**
+     * Call this method to set up the algorithm to utilize only the actual (sensor feedback) value for the derivative term calculation.
+     */
 	public void setActualAsDerivTermSrc(){
 		useErrForDerivTerm = false;
 	}
 	
-	/**
-	 * @return the kp
-	 */
+    /**
+     * @return The present Proportional term gain
+     */
 	public double getKp() {
 		return Kp;
 	}
@@ -264,7 +314,7 @@ public abstract class CasserolePID {
 	}
 
 	/**
-	 * @return the ki
+	 * @return The present Integral term gain
 	 */
 	public double getKi() {
 		return Ki;
@@ -278,7 +328,7 @@ public abstract class CasserolePID {
 	}
 
 	/**
-	 * @return the kd
+	 * @return The present Derivative term gain
 	 */
 	public double getKd() {
 		return Kd;
@@ -292,7 +342,7 @@ public abstract class CasserolePID {
 	}
 
 	/**
-	 * @return the kf
+	 * @return The present feed-forward term gain
 	 */
 	public double getKf() {
 		return Kf;
@@ -306,7 +356,7 @@ public abstract class CasserolePID {
 	}
 
 	/**
-	 * @return the kdf
+	 * @return The present derivative feed-forward term gain
 	 */
 	public double getKdf() {
 		return Kdf;
@@ -320,7 +370,7 @@ public abstract class CasserolePID {
 	}
 
 	/**
-	 * @return the kp2
+	 * @return The present Proportional-squared term gain
 	 */
 	public double getKp2() {
 		return Kp2;
@@ -333,14 +383,33 @@ public abstract class CasserolePID {
 		Kp2 = kp2;
 	}
 	
+	/**
+     * Set limits on what the control effort (output) can be commanded to.
+	 * @param min Smallest allowed control effort
+     * @param max Largest allowed control effort
+	 */
 	public void setOutputRange(double min, double max){
 		outputMin = min;
 		outputMax = max;
 	}
 	
+	/**
+	 * @return The present setpoint
+	 */
 	public double getSetpoint(){
 		return setpoint;
 	}
 	
+	/**
+     * Set the Integral term disable threshold. If the absolute value of the error goes above this
+     * threshold, the integral term will be set to zero AND the integrators will internally reset their
+     * accumulators to zero. Once the error gets below this threshold, the integrators will resume integrating
+     * and contributing to the control effort. This is a mechanism to help prevent integrator windup in high-error
+     * conditions. By default it is disabled (threshold = positive infinity).
+	 * @param integratorDisableThresh_in The new threshold to use.
+	 */
+	public double setintegratorDisableThresh(double integratorDisableThresh_in){
+		integratorDisableThresh = integratorDisableThresh_in;
+	}
 	
 }
