@@ -1,13 +1,22 @@
-package org.usfirst.frc.team1736.robot;
+package lib.Sensors;
 import java.util.TimerTask;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.I2C.Port;
  
-/*
- * Shamelessly copied from https://gist.github.com/tech2077/c4ba2d344bdfcddd48d2/download#
- * Comments added for clarity
- * A couple nitpicky things updated so it works with our robot.
+/**
+ * DESCRIPTION:
+ * <br>
+ * Based on https://gist.github.com/tech2077/c4ba2d344bdfcddd48d2/download#
+ * Comments added, some functionality trimmed out to match our needs. Multithreaded,
+ * will poll the sensor in the background at an appropriate rate.
+ * <br>
+ * USAGE:    
+ * <ol>   
+ * <li>Instantiate class.</li> 
+ * <li>Call start() method to begin polling the sensor</li> 
+ * <li>Call getDistance() during periodic loops to get the distance read from the sensor.</li> 
+ * </ol>
  *
  */
 
@@ -19,14 +28,14 @@ public class pulsedLightLIDAR { //We don't need any pid system, So I took out th
     private final int LIDAR_CONFIG_REGISTER = 0x00;
     private final int LIDAR_DISTANCE_REGISTER = 0x8f;
     
-    public LIDAR() {
+    public pulsedLightLIDAR() {
         i2c = new I2C(Port.kMXP, LIDAR_ADDR);
         distance = new byte[2];
         updater = new java.util.Timer();
     }
     
     /**
-     *  Internally return Distance in cm
+     * Internally return Distance in cm
      * @return distance in cm
      */
     private int getDistance() { //private cuz I don't want people interacting directly with the buffer...yah...
@@ -42,14 +51,14 @@ public class pulsedLightLIDAR { //We don't need any pid system, So I took out th
     }
     
     /**
-     *  Start 10Hz polling of LIDAR sensor, in a background task. Only allow 10 Hz. poling.
+     *  Start 10Hz polling of LIDAR sensor, in a background task. Only allow 10 Hz. polling at the moment.
      */
     public void start() {
         updater.scheduleAtFixedRate(new LIDARUpdater(), 0, 100);
     }
     
     /**
-     * Stop the background sensor-poling task.
+     * Stop the background sensor-polling task.
      */
     public void stop() {
         updater.cancel();
@@ -59,7 +68,7 @@ public class pulsedLightLIDAR { //We don't need any pid system, So I took out th
     /**
      * Read from the sensor and update the internal "distance" variable with the result.
      */
-    public void update() {
+    private void update() {
         i2c.write(LIDAR_CONFIG_REGISTER, 0x04); // Initiate measurement
         Timer.delay(0.04); // Delay for measurement to be taken
         i2c.read(LIDAR_DISTANCE_REGISTER, 2, distance); // Read in measurement
@@ -68,7 +77,6 @@ public class pulsedLightLIDAR { //We don't need any pid system, So I took out th
     
     /**
      *  Timer task to keep distance updated
-     * @author Chris Gerth
      *
      */
     private class LIDARUpdater extends TimerTask {

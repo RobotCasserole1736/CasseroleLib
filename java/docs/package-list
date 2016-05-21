@@ -2,4 +2,8 @@ lib.BatteryParam
 lib.CasserolePID
 lib.HAL
 lib.LEDs
+lib.Logging.simpleCsvLogger
+lib.MotorCurrentEstimators
+lib.Sensors
 lib.SignalMath
+lib.Util

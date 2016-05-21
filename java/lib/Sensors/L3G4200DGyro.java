@@ -1,36 +1,35 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2015. All Rights Reserved.
-///////////////////////////////////////////////////////////////////////////////
-//
-// CLASS NAME: I2CGyro
-// DESCRIPTION: I2C Gyro class - driver for L3G4200D MEMS Gyro
-// 				Includes filtering and descrete integral for angle calculation.
-//
-// NOTES: Multithreaded support. Initializing the gyro kicks off a periodic
-//        read function which asynchronously reads from they gyro in the
-//        background. 
-//     
-//        The periodic update function is designed to be called by this 
-//        background thread. Each time it is called, it gets the latest value
-//        from the gyro, performs any filtering required, and integrates
-//        the gyro value to calculate an angle. Class-private variables are 
-//        updated by this function. 
-//
-// USAGE: 1) Instantiate Class. This will start periodic reads from the sensor
-//             in the background.
-//        2) When needed, call the read methods to get the most recent angle or
-//             rotational rate reading from the sensor.
-//
-///////////////////////////////////////////////////////////////////////////////
-
-
-package org.usfirst.frc.team1736.robot;
+package lib.Sensors;
 import java.util.Arrays; //For median filter sorting
 import java.util.TimerTask; //For multithreading support
 
 import edu.wpi.first.wpilibj.I2C; //FRC's internal I2C libraries for the RoboRio
 import edu.wpi.first.wpilibj.I2C.Port;
 
+
+/**
+ * DESCRIPTION:
+ * <br>
+ * Driver for L3G4200D MEMS Gyro
+ * Includes filtering and discrete integral for angle calculation.
+ * <br>
+ * Multithreaded support. Initializing the gyro kicks off a periodic
+ * read function which asynchronously reads from they gyro in the
+ * background. 
+ * <br>
+ * The periodic update function is designed to be called by this 
+ * background thread. Each time it is called, it gets the latest value
+ * from the gyro, performs any filtering required, and integrates
+ * the gyro value to calculate an angle. Class-private variables are 
+ * updated by this function. 
+ * <br>
+ * USAGE:    
+ * <ol>   
+ * <li>Instantiate class. This will start periodic reads and calcualtions in the background.</li> 
+ * <li>Set Threshold and dbnc (time) globals</li> 
+ * <li>When needed, call the read methods to get the most recent angle or rotational rate reading from the sensor.</li>    
+ * </ol>
+ *
+ */
 
 public class I2CGyro {
 	
@@ -112,18 +111,19 @@ public class I2CGyro {
 	private volatile double[] gyro_z_val_deg_per_sec = {0, 0, 0};
 	
 	
-	//Number of reads to do on init
+	/** Number of reads to do on init */
 	public static final int GYRO_INIT_READS = 500;
 	
-	//Nominal Z value
-	//This is populated at startup with the average value of all the reads we
-	// take from the gyro.
+	/**
+	 *Nominal Z value. This is populated at startup with the average value of all the reads we
+	 * take from the gyro.
+     */
 	public short zero_motion_offset;
 	
 	//Max range before we declare the gyro overloaded
 	private final short gyro_max_limit = 0x7FB0; //directly in bits, same scale as gyro's registers
 	
-	//Deadzone 
+	/** Minimum rotational speed to start accumulating rotation*/
 	public static final double gyro_deadzone = 0.1; //(in deg/sec)
 	
 	//Conversion factor from bits to degrees per sec
@@ -321,10 +321,12 @@ public class I2CGyro {
 	//Gyro Constructor
 	///////////////////////////////////////////////////////////////////////////////
 	
-	//Constructor initalizes the data associated with the gyro, starts talking to it over I2C
-	//sets inital register values
-	//reads from the gyro a few times to figure out the zero-offset value
-	//sets the zero-offset value
+	/**
+     *Constructor initalizes the data associated with the gyro, starts talking to it over I2C
+	 *It sets inital register values,
+	 *reads from the gyro a few times to figure out the zero-offset value, then
+	 *sets the zero-offset value. Finally, reading is kicked off in the background.
+     */
 	I2CGyro(){ 
 		byte[] rx_byte = {0}; //temp variable to store a byte to transmit over I2C
 		
@@ -393,9 +395,9 @@ public class I2CGyro {
 	//Public methods
 	///////////////////////////////////////////////////////////////////////////////
 	
-	//Must be synchronized due to multi-threaded stuff
-	
-	//Returns the most recent gyro reading in degrees per second
+	/**
+     *@return The most recent gyro reading in degrees per second.
+     */
 	public  double get_gyro_z(){
 		if(gyro_initalized)
 			return gyro_z_val_deg_per_sec[0];
@@ -403,9 +405,12 @@ public class I2CGyro {
 			return Double.NaN;
 	}
 	
-	//returns the most recently calculated gyro angle in degrees
-	//Angle can vary between -Infinity and Infinity, you must wrap this
-	// to 0-360 if desired
+	/**
+     * Get the most recent angle calculation result from the gyro.
+	 * Angle can vary between -Infinity and Infinity, you must wrap this
+	 * to 0-360 if desired.     
+     * @return The most recently calculated gyro angle in degrees
+     */
 	public  double get_gyro_angle(){
 		if(gyro_initalized)
 			return angle;
@@ -414,15 +419,19 @@ public class I2CGyro {
 		
 	}
 	
-	//Resets the current angle of the gyro to zero
+	/** Resets the current angle of the gyro to zero*/
 	public  void reset_gyro_angle(){
 		angle = 0;		
 	}
-	
+	/** Check if the most recent read from the gyro was good or not.
+     * @return True if gyro is reading good data, false if gyro data is corrupted.
+     */
 	public  boolean get_gyro_read_status(){
 		return gyro_read_status;
 	}
-	
+	/** Check if the gyro has been initalized fully yet or not.
+     * @return True if gyro is initalized, false if not.
+     */
 	public  boolean get_gyro_initalized(){
 		return gyro_initalized;
 	}
@@ -475,7 +484,7 @@ public class I2CGyro {
 	//It commands a gyro read, scales the raw data to degrees/sec, and then calculates the current angle
 	// using the desired integration method
 	@SuppressWarnings("unused") //suppress compiler warnings because I swear, we do actually use this function.
-	public  void periodic_update() {
+	private  void periodic_update() {
 		long cur_period_start_time = System.nanoTime(); //Record the time the current sample is being taken at.
 		//shift existing values
     	gyro_z_val_deg_per_sec[2] = gyro_z_val_deg_per_sec[1]; //note we discard the oldest sample

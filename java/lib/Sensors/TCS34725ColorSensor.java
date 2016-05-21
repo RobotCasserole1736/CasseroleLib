@@ -1,32 +1,24 @@
-package org.usfirst.frc.team1736.robot;
+package lib.Sensors;
 
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port;
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
-///////////////////////////////////////////////////////////////////////////////
-//
-// CLASS NAME: TCS34725ColorSensor
-// DESCRIPTION: Simple API for the TCS34725 color sensor from adafruit
-//              Provides interfacing for initializing the sensor and performing 
-//                qualified reads of color values.
-//              Coded with lots and lots of help from https://github.com/adafruit/Adafruit_TCS34725. 
-//              Thanks KTOWN!!! If I ever meet you, I owe you a drink.
-//
-// USAGE: 1) Instantiate Class
-//        2) Call init() once to set up the sensor
-//        3) Once per periodic loop, call the readColors() method to get data
-//              from the sensor.
-//        4) After the readColors() call, use the getCOLOR() methods to access
-//              the most recent color readings (RGBC) from the sensor.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
-
 /**
- * TCS34725ColorSensor - 
- * @author Chris Gerth
+ * DESCRIPTION:
+ * <br>
+ * Simple API for the TCS34725 color sensor from adafruit
+ * Provides interfacing for initializing the sensor and performing 
+ * qualified reads of color values.
+ * Coded with lots and lots of help from https://github.com/adafruit/Adafruit_TCS34725. 
+ * Thanks KTOWN!!! If I ever meet you at a non-FRC event, I owe you a drink.
+ * <br>
+ * USAGE:    
+ * <ol>   
+ * <li>Instantiate class.</li> 
+ * <li>Call init() once to set up the sensor</li> 
+ * <li>Once per periodic loop, call the readColors() method to get data from the sensor.</li>    
+ * <li>After the readColors() call, use the getCOLOR() methods to access the most recent color readings (RGBC) from the sensor.</li>    
+ * </ol>
  *
  */
 public class TCS34725ColorSensor {
@@ -73,7 +65,9 @@ public class TCS34725ColorSensor {
 	
 	
 	//State Variables
+    /**True if sensor has been initialized, false if not*/
 	public boolean sensor_initalized;
+    /**True if the last read from the sensor was good, bad if data was corrupted*/
 	public boolean good_data_read;
 	private int red_val;
 	private int green_val;
@@ -94,7 +88,7 @@ public class TCS34725ColorSensor {
 	
 
 	/**
-	 * init - initializes the actual sensor state so colors can be read.
+	 * Initializes the actual sensor state so colors can be read.
 	 * By default the sensor powers up to a "disabled" state. This enables it.
 	 * Additionally, checks the sensor has the proper internal ID and 
 	 * sets hard-coded gains and integrator times.
@@ -133,7 +127,7 @@ public class TCS34725ColorSensor {
 	}
 	
 	/**
-	 * readColors - queries the sensor for the red, green, blue, and clear values
+	 * Queries the sensor for the red, green, blue, and clear values
 	 * Qualifies the read to ensure the sensor has not been reset since the last read.
 	 * @return 0 on read success, -1 on failure.
 	 */
@@ -181,7 +175,7 @@ public class TCS34725ColorSensor {
 	}
 	
 	/**
-	 * getRedVal - returns the most recent red intensity read from the sensor
+	 * Returns the most recent red intensity read from the sensor
 	 * @return most recently read red intensity
 	 */
 	public int getRedVal(){
@@ -189,7 +183,7 @@ public class TCS34725ColorSensor {
 	}
 	
 	/**
-	 * getGreenVal - returns the most recent green intensity read from the sensor
+	 * Returns the most recent green intensity read from the sensor
 	 * @return most recently read green intensity
 	 */
 	public int getGreenVal(){
@@ -197,7 +191,7 @@ public class TCS34725ColorSensor {
 	}
 	
 	/**
-	 * getBlueVal - returns the most recent blue intensity read from the sensor
+	 * Returns the most recent blue intensity read from the sensor
 	 * @return most recently read blue intensity
 	 */
 	public int getBlueVal(){
@@ -205,7 +199,7 @@ public class TCS34725ColorSensor {
 	}
 	
 	/**
-	 * getClearVal - returns the most recent overall intensity read from the sensor
+	 * Returns the most recent overall intensity read from the sensor
 	 * @return most recently read overall intensity
 	 */
 	public int getClearVal(){
@@ -213,8 +207,8 @@ public class TCS34725ColorSensor {
 	}
 	
 	/**
-	 * safeSleep - wrapped Thread.sleep call to safely delay for a given period of time
-	 * @param milliseconds - time to delay for in ms.
+	 * Wrapped Thread.sleep call to safely delay for a given period of time. Presumes there is nothing to do if sleeping is interrupted.
+	 * @param milliseconds Time to delay for in ms.
 	 */
 	private void safeSleep(long milliseconds){
 		try {
