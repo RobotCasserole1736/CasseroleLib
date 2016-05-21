@@ -1,32 +1,55 @@
-package org.usfirst.frc.team1736.robot;
+package lib.BatteryParam;
 
 import java.util.Arrays;
+import lib.SignalMath;
+
 
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
-///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. See the License file. 
 //
-// DESCRIPTION:  Battery parameter estimator - calculates an estimate for a 
-//                battery's open circuit voltage (Voc) and equivilant series 
-//                resistance (ESR) based on a windows of system current/voltage 
-//                measurements. Ensures enough spread in the measurement window to
-//                ensure confidence in the estimate. Based on a whitepaper detailing
-//                an algorithm developed for the 2016 FRC season by FRC1736 
-//                RobotCasserole.
+// Can you use this code? Sure! We're releasing this under GNUV3, which 
+// basically says you can take, modify, share, publish this as much as you
+// want, as long as you don't make it closed source.
 //
-// USAGE: 1) Instantiate Class
-//        2) Once per periodic loop, call the updateEstimate() method to calculate
-//             a new paramater estimate
-//        3) After updateEstimate(), call the other getters to utilize the estimated
-//             parameters.
-//
+// If you do find it useful, we'd love to hear about it! Check us out at
+// http://robotcasserole.org/ and leave us a message!
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+* DESCRIPTION:
+* <br>
+* Battery parameter estimator - calculates an estimate for a 
+* battery's open circuit voltage (Voc) and equivilant series 
+* resistance (ESR) based on a windows of system current/voltage 
+* measurements. Ensures enough spread in the measurement window to
+* ensure confidence in the estimate. Based on a whitepaper detailing
+* an algorithm developed for the 2016 FRC season by FRC1736 
+* RobotCasserole.
+* <br> 
+* The constants for the initial parameter estimate were tuned assuming
+* a freshly charged, relatively new MK ES17-12 battery (from andymark). 
+* It should self-adjust to whatever battery you put in. However, if you seen
+* a giant jump at the start of each match, you may wish to update the "*init" 
+* constants to more accurately represent your "nominal" initial system state.
+* <br>
+* <br>
+* USAGE:    
+* <ol>   
+* <li>Instantiate Class </li> 
+* <li>Once per periodic loop, call the updateEstimate() method to calculate
+* a new paramater estimate </li>    
+* <li>After updateEstimate(), call the other getters to utilize the estimated
+* parameters.</li>
+* </ol>
+* 
+* 
+*/
 public class BatteryParamEstimator {
 
-	static double VocEstInit = 13;
-	static double EsrEstInit = 0.025;
-	static double IdrawInit = 0.025;
+    //Adjust these to make your initial estimation better
+	final double VocEstInit = 13;
+	final double EsrEstInit = 0.025;
+	final double IdrawInit = 0.025;
 	
 	double VocEst = VocEstInit;
 	double ESREst = EsrEstInit;
@@ -44,6 +67,12 @@ public class BatteryParamEstimator {
 	AveragingFilter input_I_filt;
 	AveragingFilter esr_output_filt;
 	
+    /**
+     * Initalizes all internal variables for using the class.
+     *@param length Window size to consider for estimation. 100 is usually a good start. Smaller windows
+     *       make the estimator react faster to rapid changes in the electrical system, but larger
+     *       windows make it more immune to noise. Engineering tradeoff, you pick!
+     */
 	public BatteryParamEstimator(int length){
 		lms_window_length = length;
 		index = 0;
@@ -62,10 +91,10 @@ public class BatteryParamEstimator {
 	}
 
 	/**
-	 * updateEstimate - Update the internal estimates with a new measured system voltage and current. Should be called
+	 * Update the internal estimates with a new measured system voltage and current. Should be called
 	 * once per control loop.
-	 * @param measSysVoltage_V - Battery voltage as measured by PDB
-	 * @param measSysCurrent_A - Current draw as measured by PDB
+	 * @param measSysVoltage_V Battery voltage as measured by PDB
+	 * @param measSysCurrent_A Current draw as measured by PDB
 	 */
 	public void updateEstimate(double measSysVoltage_V, double measSysCurrent_A){
 		
@@ -120,32 +149,32 @@ public class BatteryParamEstimator {
 	}
 	
 	/**
-	 * getEstESR - returns the most recent calculated equivilant series resistance
-	 * @return the most recent calculated equivilant series resistance
+	 * Getter for ESR. Must be called after estimator is run.
+	 * @return the most recent calculated equivalent series resistance
 	 */
 	public double getEstESR(){
 		return ESREst;
 	}
 
 	/**
-	 * getEstVoc - returns the most recent calculated open circuit resistance
-	 * @return the most recent calculated open circuit resistance
+	 * Getter for Voc. Must be called after estimator is run.
+	 * @return the most recent calculated open circuit voltage
 	 */
 	public double getEstVoc(){
 		return VocEst;
 	}
 	
 	/**
-	 * getConfidence - returns the most recent confidenc decision
-	 * @return True if the most recent window had enough spread for a reasonable estimate, false if not.
+	 * Getter for Confidence condition met boolean. Must be called after estimator is run.
+	 * @return True if the most recent window had enough spread in I_draw for a reasonable estimate, false if not.
 	 */
 	public boolean getConfidence(){
 		return confident;
 	}
 	
 	/**
-	 * getEstVsys - given a system current draw, estimate the resulting system voltage given the battery parameters.
-	 * @param Idraw_A - estimated system current draw in Amps
+	 * Given a system current draw, estimate the resulting system voltage given the latest estimated battery parameters.
+	 * @param Idraw_A estimated system current draw in Amps
 	 * @return Estimated Vsys in Volts
 	 */
 	public double getEstVsys(double Idraw_A){
@@ -153,8 +182,8 @@ public class BatteryParamEstimator {
 	}
 	
 	/**
-	 * getMaxIdraw - given a minimum system voltage allowable, estimate the maximum current which may be drawn from the battery at present time..
-	 * @param VsysMin_V - minimum desireable system voltage
+	 * Given a minimum system voltage allowable, estimate the maximum current which may be drawn from the battery at the present time.
+	 * @param VsysMin_V minimum desirable system voltage
 	 * @return The maximum current which the robot may pull in amps.
 	 */
 	public double getMaxIdraw(double VsysMin_V){
@@ -163,7 +192,7 @@ public class BatteryParamEstimator {
 	
 	
 	/**
-	 * findSum - calculates the sum of all elements in an array of doubles
+	 * Calculates the sum of all elements in an array of doubles
 	 * @param input - array to add up.
 	 * @return sum of all values in the array.
 	 */
@@ -176,7 +205,7 @@ public class BatteryParamEstimator {
 	}
 	
 	/**
-	 * findDotProd - calculates the dot product of two equally-sized arrays of doubles A and B. Dot product is found by multiplying each
+	 * Calculates the dot product of two equally-sized arrays of doubles A and B. Dot product is found by multiplying each
 	 * element of A with the corresponding element of B, and adding together the result of each multiplication. 
 	 * @param A First Array
 	 * @param B Second Array
@@ -197,7 +226,7 @@ public class BatteryParamEstimator {
 	}
 	
 	/**
-	 * findStdDev - Calculates the standard deviation of a set of doubles. Standard deviation is defined as the square root of the 
+	 * Calculates the standard deviation of a set of doubles. Standard deviation is defined as the square root of the 
 	 * sum of the squares of the distances of each element from the average of the dataset.
 	 * @param input - doubles to take the Standard Deviation of.
 	 * @return standard deviation of the input set.

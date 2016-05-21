@@ -8,13 +8,31 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.io.BufferedWriter;
 
-/**
- * CSV Logger Class - Provides an API for FRC 1736 Robot Casserole datalogging on the robot during runs
- * Will write lines into a CSV file with a unique name between calls to init() and close(). output_dir is 
- * hardcoded to point to a specific 2016 folder on a flash drive connected to the roboRIO. 
- * @author Chris Gerth
- *
- */
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) FRC Team 1736 2016. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+//
+// DESCRIPTION: Provides an API for FRC 1736 Robot Casserole datalogging on 
+//               the robot during testing or matches. Will write lines into a  
+//               CSV file with a unique name between calls to init() and 
+//               close(). output_dir is hardcoded to point to a specific 2016 
+//               folder on a flash drive connected to the roboRIO. 
+//               
+//
+// USAGE: 1) Instantiate Class
+//        2) Create global variables containing arrays of strings to represent
+//            the column (data vector) names and units
+//        3) During teleop init or autonomous init, call the init() function to
+//            start logging data to a new file.
+//        4) Once per loop, call the writeData() method with the full list of
+//            values to write to file (all must be converted to doubles).
+//        5) During DisabledInit, call the close() method to close out any file
+//            which was being written to while the robot was doing something.
+//        6) Post-match or -practice, extract the data logs from the USB drive
+//            (maybe using FTP?) and view with excel or your favourite software.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 public class CsvLogger {
 	
 	long log_write_index;
