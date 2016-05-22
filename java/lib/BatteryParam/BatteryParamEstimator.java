@@ -33,6 +33,9 @@ import lib.SignalMath;
 * constants to more accurately represent your "nominal" initial system state.
 * <br>
 * <br>
+* Whitepaper link: <a href="../../../../doc/current_limiting.pdf">Current Estimation</a>.
+* <br>
+* <br>
 * USAGE:    
 * <ol>   
 * <li>Instantiate Class </li> 

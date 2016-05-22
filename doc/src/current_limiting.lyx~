@@ -1,0 +1,1392 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2cm
+\topmargin 3cm
+\rightmargin 2cm
+\bottommargin 3cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Current-Limiting Motor Control
+\end_layout
+
+\begin_layout Author
+Chris Gerth - Jeremy Lee - FRC 1736 Robot Casserole
+\end_layout
+
+\begin_layout Date
+Dec 2015
+\end_layout
+
+\begin_layout Abstract
+A method for limiting motor voltage commands is presented.
+ The target controlled variable is system voltage - too much current draw
+ from the motors will lower system voltage to the point where the controller
+ enters a 
+\begin_inset Quotes eld
+\end_inset
+
+brownout
+\begin_inset Quotes erd
+\end_inset
+
+ state.
+ This is undesirable during a FRC robotics match.
+ The method is an adaptive observer plant model which estimates battery
+ parameters in real time, and limits current draw from motors to prevent
+ system voltage drop.
+ 
+\end_layout
+
+\begin_layout Abstract
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Abstract
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Abstract
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Problem Statement, Constraints, and Assumptions
+\begin_inset CommandInset label
+LatexCommand label
+name "part:Problem-Statement,-Constraints,"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+During FRC robotics competitions, there are many constraints on the set
+ of electrical components which may be used.
+ This includes motors, controllers, and batteries.
+ The construction of an ever-more powerful drive-train is inherently limited
+ by these component constraints, as arbitrarily more-powerful motors and
+ energy sources cannot be used.
+ The usual standard for drive-train combinations involves the FR801-001
+ 2.5
+\begin_inset Quotes erd
+\end_inset
+
+ CIM motor and the MK ES17-12 battery.
+ There are a maximum of six CIM motors used to power all wheels.
+ The motors are fed by electronic PWM controllers, where voltage is the
+ commanded parameter.
+ CIM motors can pull upwards of 120A at stall.
+ Six stalled CIM motors is more than enough to cause controller brownout
+ due to current-draw-induced voltage drop (verily, six stalled CIM motors
+ can cause the MK battery to combust! This is why circuit breakers exist!).
+ Even at non-stall conditions, allowing the motors to draw excessive current
+ can quickly pull down system voltage.
+ Traditionally, this is limited by using fewer CIM motors for the drive-train,
+ or using less grippy wheels (allowing for slip to occur sooner), or increasing
+ the gear ratio to slow the whole system down.
+ All of these mitigations reduce drive-train performance, and are therefore
+ considered to be an engineering trade-off.
+ 
+\end_layout
+
+\begin_layout Standard
+The low-bar solution for limiting system voltage drop is to monitor either
+ the system voltage or battery current draw, and reducing all motor commands
+ as a preset limit is neared.
+ This may work in some cases.
+ However, most brownouts occur due to transient conditions (IE, current
+ spikes) from collisions or sudden changes in driver commands.
+ Since the measurements of system voltage and current are analog, they are
+ inherently limited both by the system sample time, and by analog noise.
+ Getting accurate signals will involve filtering, but any filtering induces
+ delay in signal response time to rapidly changing conditions.
+ A higher-bandwidth data source is needed.
+ For this algorithm, the speed of the motors was chosen, since encoders
+ have much more accurate signals exactly at the sample rate of the software
+ (nearly zero noise).
+ This leads to the need for an observer plant model to estimate motor current
+ draw based on speed, voltage, and other physical parameters of the robot.
+ Finally, the traditional model of ideal DC motors yields a total current
+ draw, but does not directly predict system voltage drop due to this current
+ draw.
+ Predicting system voltage drop requires knowing an accurate model of the
+ battery.
+ Since each battery is slightly different and over a match the battery's
+ parameters will change, an adaptive algorithm is needed to estimate the
+ battery's parameters.
+ Since these parameters change relatively slowly over time, lower-bandwidth
+ signals may be used as inputs to derive them.
+\end_layout
+
+\begin_layout Standard
+This paper presents a method which allows for optimal mechanical design
+ of the drive-train, but actively ensures system voltage does not drop below
+ a preset minimum threshold (referred to herein as 
+\begin_inset Formula $V_{sys,min}$
+\end_inset
+
+).
+ By limiting the system voltage drop in software, the drive-train can be
+ designed to be arbitrarily powerful and grippy, and allow for as rapid
+ of a gear ratio as desired.
+ Since the algorithm only requires a preset 
+\begin_inset Formula $V_{sys,min}$
+\end_inset
+
+ limit (along with a few well-known physical parameters of the motors),
+ it is guaranteed to always run the hardware at its physical limits, and
+ not impose additional 
+\begin_inset Quotes eld
+\end_inset
+
+tuning
+\begin_inset Quotes erd
+\end_inset
+
+ constraints seen by other similar algorithms.
+\end_layout
+
+\begin_layout Standard
+For the purposes of this paper, a six-CIM tank drive platform is assumed.
+ This means two sets of three-motor drive-trains with a single gear ratio
+ from motor to wheel, which apply force on the left and right sides of a
+ rigid frame.
+ Rotation is accomplished by driving the wheels at different speeds.
+ However, the algorithms described herein are easily adapted to other drive
+ platforms.
+\end_layout
+
+\begin_layout Part
+Current Limiting Algorithm
+\end_layout
+
+\begin_layout Standard
+The Current Limiting Algorithm is responsible for establishing a maximum
+ motor voltage command to each set of wheels.
+ The limiting involved is driven by the need to prevent system voltage from
+ dropping below the preset 
+\begin_inset Formula $V_{sys,min}$
+\end_inset
+
+limit.
+\end_layout
+
+\begin_layout Section
+Data Sources
+\end_layout
+
+\begin_layout Standard
+As indicated in Part 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "part:Problem-Statement,-Constraints,"
+
+\end_inset
+
+, the only external input needed for current estimation is the motor's present
+ rotational speed.
+ This may be derived from an encoder attached somewhere on each side of
+ the drive-train.
+ The motor's signed rotational speed at time-step 
+\begin_inset Formula $n$
+\end_inset
+
+ in rad/sec can be calculated as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\omega_{m}[n]=K_{enc\_ratio}*\omega_{enc}[n]
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here, 
+\begin_inset Formula $\omega_{enc}$
+\end_inset
+
+is the encoder's rotational speed in radians/sec at time-step 
+\begin_inset Formula $n$
+\end_inset
+
+, and 
+\begin_inset Formula $K_{enc\_ratio}$
+\end_inset
+
+ is the gear ratio between the motor, and the measuring point of the encoder.
+ If the encoder is attached directly to the motor, 
+\begin_inset Formula $K_{enc\_ratio}$
+\end_inset
+
+is simply 1.
+ If the encoder is attached on another gear, it will be something other
+ than 1.
+\end_layout
+
+\begin_layout Standard
+Additionally, we will need to know the voltage applied to the motor.
+ This can be calculated based off the present system voltage and the software
+ command to the motor.
+ The software command is normalized to the range 
+\begin_inset Formula $\left[-1,1\right]$
+\end_inset
+
+, where -1 means 
+\begin_inset Quotes eld
+\end_inset
+
+full reverse
+\begin_inset Quotes erd
+\end_inset
+
+ and 1 means 
+\begin_inset Quotes eld
+\end_inset
+
+full forward
+\begin_inset Quotes erd
+\end_inset
+
+ (0, of course, means 
+\begin_inset Quotes eld
+\end_inset
+
+stop
+\begin_inset Quotes erd
+\end_inset
+
+).
+ The present system voltage can come from a number of places: For simplicity
+ it can be assumed to just be 12V.
+ It could also be taken from a filtered measurement of the present system
+ voltage (which will be needed anyway in part 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "part:Battery-Parameter-Estimation"
+
+\end_inset
+
+).
+ Finally, it could also be derived from the previous loop estimation from
+ this current limiting algorithm.
+ The first solution does not account for decaying battery voltage over the
+ match, but the final one may induce oscillation due to an extra degree
+ of linkage (higher order) in the differential equations.
+ Therefore, for this analysis, the filtered measurement of present system
+ voltage will be used.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+V_{m}[n]=V_{sys}[n]*Cmd[n]
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Motor Model
+\end_layout
+
+\begin_layout Standard
+The classical model for a DC motor involves a two-terminal device circuit,
+ where the two terminals are linked by a resistance and a variable voltages
+ source in series.
+ The resistance represents the electrical resistance of the motor winding
+ and communicator.
+ All inductive effects of the wrapped wire are ignored.
+ The voltage source represents the 
+\begin_inset Quotes eld
+\end_inset
+
+back-EMF
+\begin_inset Quotes erd
+\end_inset
+
+ induced by the fact that a magnet is spinning with respect to a coil of
+ wire.
+ The current through the series circuit is proportional to the torque of
+ the motor.
+ The speed of the motor shaft is proportional to the back-EMF effect of
+ the voltage source.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename motor_mdl.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Classical model of a DC Motor
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: DC-motor-model"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Assuming V is the driving voltage from the motor controller and L is zero,
+ we can apply Kirchhoff's Voltage Law and Ohm's Law around the circuit to
+ arrive at the following relationship:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+V_{m}[n]=I_{m}[n]R_{m}+V_{emf}[n]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For 
+\begin_inset Formula $V_{m}$
+\end_inset
+
+being the driving voltage of the motor, 
+\begin_inset Formula $R_{m}$
+\end_inset
+
+being the resistance of the motor winding, 
+\begin_inset Formula $I_{m}$
+\end_inset
+
+being the current draw of the motor, and 
+\begin_inset Formula $V_{emf}$
+\end_inset
+
+ being the back-EMF from the output shaft rotation.
+\end_layout
+
+\begin_layout Standard
+Re-arranging, we find the current draw from one motor on one side of the
+ drive-train is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+I_{m}[n]=\frac{V_{m}[n]-V_{emf}[n]}{R_{m}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Again from the classical DC motor model, we assume that 
+\begin_inset Formula $V_{emf}$
+\end_inset
+
+ is linearly proportional to the rotational speed of the motor.
+ We will call this constant of proportionality 
+\begin_inset Formula $K_{i}$
+\end_inset
+
+.
+ This yields the final relationship 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We have now reduced the total current from one motor to an equation made
+ up of known inputs and constant values.
+\end_layout
+
+\begin_layout Section
+Determining Motor Constants
+\end_layout
+
+\begin_layout Standard
+For the CIM motor, we know two crucial facts: Stall Current is 133A, and
+ Free-wheel speed is 5310 RPM while drawing 2.7A
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+See http://content.vexrobotics.com/docs/217-2000-CIM-motor-specs.pdf
+\end_layout
+
+\end_inset
+
+.
+ In both cases, the supply voltage is 12V.
+ Using these relationships, we can solve for the constant parameters in
+ the motor model.
+ Starting with Stall condition, we know 
+\begin_inset Formula $\omega_{m}=0$
+\end_inset
+
+.
+ Therefor:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+113=\frac{12-K_{i}*0}{R_{m}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+R_{m}=\frac{12}{113}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+R_{m}=0.1062\Omega
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now, using this number, we plug in information for Free-Wheel Speed.
+ Remember to convert RPM to rad/sec
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+2.7=\frac{12-K_{i}*5310*\frac{\pi}{180}}{0.1062}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+K_{i}=0.1263
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Remember these constants are for CIM motors only.
+ Different motors will need this section to be re-calculated for their parameter
+s.
+\end_layout
+
+\begin_layout Section
+Total Estimated Current Draw
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Total-Estimated-Current"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since all parameters of the motors are now known, we can use the speed from
+ either side of the drive-train to determine total drive-train current draw.
+ Again, note this assumes a 6-CIM tank drive setup, with subscript 
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\begin_inset Formula $l$
+\end_inset
+
+ indicating left and right sides of the drive-train:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+I_{dt}[n]=3*I_{mr}[n]+3*I_{ml}[n]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+I_{dt}[n]=3*\frac{V_{mr}[n]-K_{i}\omega_{mr}[n]}{R_{m}}+3*\frac{V_{ml}[n]-K_{i}\omega_{ml}[n]}{R_{m}}\label{eq:Idt}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Again, note this equation for total current draw produces the current at
+ time-step 
+\begin_inset Formula $n$
+\end_inset
+
+ using only known inputs (
+\begin_inset Formula $V$
+\end_inset
+
+ and 
+\begin_inset Formula $\omega$
+\end_inset
+
+) and constant parameters.
+\end_layout
+
+\begin_layout Standard
+At this point, limiting could be applied based around a maximum desired
+ current draw from the drive-train.
+ However, since brownouts are caused by system voltage drops, a further
+ step in this algorithm is taken to estimate the system voltage drop induced
+ by this current draw.
+\end_layout
+
+\begin_layout Section
+Battery Model
+\end_layout
+
+\begin_layout Standard
+Before continuing determining if limiting is actually needed, we must establish
+ what our battery behaves like under load.
+ A battery is classically characterized as an ideal voltage source in series
+ with a resistor.
+ As more current is drawn from the battery, the voltage drop across the
+ resistance causes the output voltage of the battery to drop.
+ As the battery discharges, the ideal voltage source decreases from a nominal
+ (fully-charged) value of near ~13V to something much lower (~8V or even
+ lower).
+ As the battery ages over time, the internal resistance will also increase,
+ making the battery more susceptible to voltage drops from a large current
+ draw.
+ See figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: Battery_mdl"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename battery.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Classical model of a lead-acid Battery
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: Battery_mdl"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+From section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Total-Estimated-Current"
+
+\end_inset
+
+, we know during every control loop what the current draw from the drive-train
+ will be if we apply the driver-desired voltage to the motors at the drive-train.
+ Given this current draw 
+\begin_inset Formula $I_{dt}[n]$
+\end_inset
+
+, we can then estimate the system voltage via the following equation:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+V_{sys}[n]=V_{oc}-R_{bat}I_{dt}[n]\label{eq:Vsys}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For 
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+being the system voltage at time-step 
+\begin_inset Formula $n$
+\end_inset
+
+, 
+\begin_inset Formula $V_{oc}$
+\end_inset
+
+being the open-circuit voltage of the battery (the ideal voltage source
+ in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: Battery_mdl"
+
+\end_inset
+
+), 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+being the battery's internal resistance, and 
+\begin_inset Formula $I_{dt}$
+\end_inset
+
+being the current draw from the robot.
+ This is assumed to be drive-train-only, all other current sinks on the
+ robot are negligible.
+ Note the battery's open-circuit voltage and internal resistance are considered
+ constants for this part of the analysis.
+ For reference, they are usually around 
+\begin_inset Formula $V_{oc}=12$
+\end_inset
+
+ and 
+\begin_inset Formula $R_{bat}=0.012\Omega$
+\end_inset
+
+ for a healthy battery.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+See http://www.mkbattery.com/images/ES17-12.pdf
+\end_layout
+
+\end_inset
+
+ However, later in the analysis, it will be shown how to calculate them
+ deceptively over time.
+\end_layout
+
+\begin_layout Section
+Limiting Method
+\end_layout
+
+\begin_layout Standard
+Limiting system voltage drop involves a multi-step process.
+ The basic algorithm is:
+\end_layout
+
+\begin_layout Enumerate
+Estimate current battery parameters
+\end_layout
+
+\begin_layout Enumerate
+Measure motor speeds from each side of the drive-train
+\end_layout
+
+\begin_layout Enumerate
+Determine the driver demanded voltages (
+\begin_inset Formula $V_{ddr},V_{ddl})$
+\end_inset
+
+ to the drive-train
+\end_layout
+
+\begin_layout Enumerate
+Estimate the current draw from the drive-train 
+\series bold
+if 
+\series default
+the driver demanded voltages were sent to the motors on this time-step
+\end_layout
+
+\begin_layout Enumerate
+Estimate the system voltage given the estimated current draw from the drive-trai
+n
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+If
+\series default
+ the estimated system voltage is below the preset threshold 
+\begin_inset Formula $V_{sys,min}$
+\end_inset
+
+, calculate a scaling factor for the driver-demanded voltages which will
+ hold 
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+at 
+\begin_inset Formula $V_{sys,min}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Else, 
+\series default
+set the driver-demanded voltage to the motor (no limiting)
+\end_layout
+
+\begin_layout Standard
+Every step except 6 has been demonstrated already.
+ The crucial task now is determining a scaling factor (which we will call
+ 
+\begin_inset Formula $\gamma$
+\end_inset
+
+) to apply to the driver-demanded voltages.
+ 
+\end_layout
+
+\begin_layout Standard
+Estimating the system voltage drop can be done by combining equations 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Idt"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Vsys"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+V_{sys,est}[n]=V_{oc}-R_{bat}\left[3*\frac{\left|V_{ddr}[n]-K_{i}\omega_{mr}[n]\right|}{R_{m}}+3*\frac{\left|V_{ddl}[n]-K_{i}\omega_{ml}[n]\right|}{R_{m}}\right]\label{eq:Vsys_est}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For 
+\begin_inset Formula $V_{sys,est}$
+\end_inset
+
+being the estimated system voltage for driver-demanded motor voltages 
+\begin_inset Formula $V_{ddr}$
+\end_inset
+
+and 
+\begin_inset Formula $V_{dl}$
+\end_inset
+
+.
+ Note the introduction of absolute-value signs to account for the fact that
+ the current direction is inverted at the motor controller, so the battery
+ always sees current drawn out of it (even when going in reverse).
+\end_layout
+
+\begin_layout Standard
+If scaling is needed (IE, 
+\begin_inset Formula $V_{sys,est}<V_{sys,min})$
+\end_inset
+
+, we plug in the scaled values to equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Vsys_est"
+
+\end_inset
+
+ and solve for the scaling value 
+\begin_inset Formula $\gamma$
+\end_inset
+
+.
+ Starting from equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Vsys_est"
+
+\end_inset
+
+ and plugging in the known values for the 
+\begin_inset Quotes eld
+\end_inset
+
+scaling needed
+\begin_inset Quotes erd
+\end_inset
+
+ condition:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+V_{sys,min}=V_{oc}-R_{bat}\left[3*\frac{\left|\gamma V_{ddr}[n]-K_{i}\omega_{mr}[n]\right|}{R_{m}}+3*\frac{\left|\gamma V_{ddl}[n]-K_{i}\omega_{ml}[n]\right|}{R_{m}}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+V_{oc}-V_{sys,min}=R_{bat}\left[3*\frac{\left|\gamma V_{ddr}[n]-K_{i}\omega_{mr}[n]\right|}{R_{m}}+3*\frac{\left|\gamma V_{ddl}[n]-K_{i}\omega_{ml}[n]\right|}{R_{m}}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{V_{oc}-V_{sys,min}}{3R_{bat}}=\frac{\left|\gamma V_{ddr}[n]-K_{i}\omega_{mr}[n]\right|}{R_{m}}+\frac{\left|\gamma V_{ddl}[n]-K_{i}\omega_{ml}[n]\right|}{R_{m}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{R_{m}\left(V_{oc}-V_{sys,min}\right)}{3R_{bat}}=\left|\gamma V_{ddr}[n]-K_{i}\omega_{mr}[n]\right|+\left|\gamma V_{ddl}[n]-K_{i}\omega_{ml}[n]\right|
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Due to the double absolute value symbols, we now have four possible solutions
+ for 
+\begin_inset Formula $\gamma$
+\end_inset
+
+.
+ Doing some funky algebra 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+See www.wolframalpha.com
+\end_layout
+
+\end_inset
+
+, we find all four solutions for gamma:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\gamma=\begin{cases}
+\frac{-\left(\frac{R_{m}\left(V_{oc}-V_{sys,min}\right)}{3R_{bat}}\right)+\left(K_{i}\omega_{mr}[n]\right)-\left(K_{i}\omega_{ml}[n]\right)}{V_{ddr}[n]-V_{ddl}[n]}\\
+\frac{\left(\frac{R_{m}\left(V_{oc}-V_{sys,min}\right)}{3R_{bat}}\right)+\left(K_{i}\omega_{mr}[n]\right)-\left(K_{i}\omega_{ml}[n]\right)}{V_{ddr}[n]-V_{ddl}[n]}\\
+\frac{-\left(\frac{R_{m}\left(V_{oc}-V_{sys,min}\right)}{3R_{bat}}\right)+\left(K_{i}\omega_{mr}[n]\right)+\left(K_{i}\omega_{ml}[n]\right)}{V_{ddr}[n]+V_{ddl}[n]}\\
+\frac{\left(\frac{R_{m}\left(V_{oc}-V_{sys,min}\right)}{3R_{bat}}\right)+\left(K_{i}\omega_{mr}[n]\right)+\left(K_{i}\omega_{ml}[n]\right)}{V_{ddr}[n]+V_{ddl}[n]}
+\end{cases}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+All four possible values for 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ should be computed at run-time.
+ From the four possible values, it is known that gamma can be in the range
+ 
+\begin_inset Formula $\left[-1,1\right]$
+\end_inset
+
+ since the scaling cannot exceed the physical limits of what was requested
+ or is possible with the motor controllers.
+ Among all the solutions which are in this range, the largest should be
+ chosen (as the 
+\begin_inset Formula $\gamma=1$
+\end_inset
+
+ case is where the driver-demanded voltage is honored).
+ If no solution is within the 
+\begin_inset Formula $[-1,1]$
+\end_inset
+
+ range, default to 
+\begin_inset Formula $\gamma=0$
+\end_inset
+
+.
+ It is unknown if this case is needed.
+\end_layout
+
+\begin_layout Standard
+Once a suitable 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ is found, the motor voltages for each motor should be applied as such:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+V_{m}=\begin{cases}
+V_{dd} & V_{sys,est}\geq V_{sys,min}\\
+\gamma V_{dd} & V_{sys,est}<V_{sys,min}
+\end{cases}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Battery Parameter Estimation Algorithm
+\begin_inset CommandInset label
+LatexCommand label
+name "part:Battery-Parameter-Estimation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Up until now, it has been assumed that the battery parameters are constants
+ (
+\begin_inset Formula $V_{oc}=12$
+\end_inset
+
+ and 
+\begin_inset Formula $R_{bat}=0.012\Omega$
+\end_inset
+
+).
+ This is valid for some batteries, but will induce significant error as
+ batteries discharge over a match, and age over many seasons.
+ While the aforementioned numbers are good starting points, it is worthwhile
+ attempting to determine these parameters on the fly, to account for different
+ conditions.
+ Since they are slowly-changing compared to driver inputs and motor speeds,
+ the previous calculations will be unaffected (as the assumption that the
+ battery parameters are 
+\begin_inset Quotes eld
+\end_inset
+
+constant
+\begin_inset Quotes erd
+\end_inset
+
+ is still fairly true with respect to the other time-varying signals).
+ The basic estimation method will use known voltage and current values over
+ multiple time-steps to calculate parameters of the simplified battery model
+ presented in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: Battery_mdl"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Data Sources
+\end_layout
+
+\begin_layout Standard
+The battery model has two degrees of freedom (Open-Circuit voltage and internal
+ series resistance), so two sources of data are needed to fully constrain
+ the system.
+ Starting in 2015, a CAN-enabled Power Distribution Panel was made standard
+ for FRC.
+ Using the API's associated with it, it is possible to read the total current
+ from the battery, and the present system voltage.
+ As mentioned already, these signals are lower-bandwidth and would not be
+ good for estimating transient values.
+ However, outside of transients, their values can be filtered down to fairly
+ accurate values for the voltage and current just at the battery's connection
+ to the robot.
+ To aid in transient rejection, it is suggested to take the 
+\series bold
+median
+\series default
+ of the previous ~1 second of values as the present system voltage 
+\begin_inset Formula $V_{sys}[n]$
+\end_inset
+
+ and system current 
+\begin_inset Formula $I_{sys}[n]$
+\end_inset
+
+ values.
+ Averaging (instead of the median) is another option.
+ The filtered system voltage and system current are the two inputs to the
+ estimation algorithm.
+\end_layout
+
+\begin_layout Section
+Estimation Method
+\end_layout
+
+\begin_layout Standard
+Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: Battery_mdl"
+
+\end_inset
+
+ is referenced as the model for the battery, with the measured system voltage
+ and measured system current present at its output ports.Since the battery
+ parameters change slowly over time, it is assumed at all sample points
+ that the following relations are simultaneously true:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{cases}
+V_{oc}=I_{sys}[n]R_{bat}+V_{sys}[n]\\
+V_{oc}=I_{sys}[n-1]R_{bat}+V_{sys}[n-1]
+\end{cases}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equating 
+\begin_inset Formula $V_{oc}$
+\end_inset
+
+ we find the following relationship:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+I_{sys}[n]R_{bat}+V_{sys}[n]=I_{sys}[n-1]R_{bat}+V_{sys}[n-1]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+I_{sys}[n]R_{bat}-I_{sys}[n-1]R_{bat}=V_{sys}[n-1]-V_{sys}[n]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+R_{bat}=\frac{V_{sys}[n-1]-V_{sys}[n]}{I_{sys}[n]-I_{sys}[n-1]}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Back-substituting, we also find
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+V_{oc}=I_{sys}[n]R_{bat}+V_{sys}[n]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+V_{oc}=I_{sys}[n]\frac{V_{sys}[n-1]-V_{sys}[n]}{I_{sys}[n]-I_{sys}[n-1]}+V_{sys}[n]
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Usage of Estimated Parameters
+\end_layout
+
+\begin_layout Standard
+The two battery parameters have just been estimated from measured system
+ voltage and current values.
+ This calculation should be done as part of the first step of the limiting
+ algorithm.
+ The determined numbers for the open-circuit voltage and internal resistance
+ of the battery may then be used in the other calculations.
+\end_layout
+
+\begin_layout Part
+Implementation Details
+\end_layout
+
+\begin_layout Standard
+The equations presented above are in a verbose form to demonstrate their
+ physical meaning.
+ Simplifying them is very possible to reduce the number of computations
+ done at run-time.
+\end_layout
+
+\begin_layout Standard
+Additional voltage drops and resistances may need to be added to model the
+ losses in the wires and motor controllers.
+\end_layout
+
+\begin_layout Standard
+It is highly recommended to keep a log of pertinent internal information.
+ Included in this is the measured system voltage and current, estimated
+ system voltage and drive-train currents, the estimated battery parameters,
+ the utilized scaling factor 
+\begin_inset Formula $\gamma$
+\end_inset
+
+, as well as the driver-demanded and commanded voltages.
+ These logs can be used to validate proper software behavior, and diagnose
+ erratic motions.
+ Additionally, any times when limiting was applied can be used to show why
+ exactly the algorithm was needed.
+\end_layout
+
+\begin_layout Standard
+Finally, it is to be noted that this algorithm will necessarily reduce the
+ apparent responsiveness of the drive-train.
+ Hopefully the 6-CIM drive is powerful enough that the reduction from this
+ algorithm will not be missed.
+ However, it is ideal to have it in place well before the drive team begins
+ practice, as adding it partway in may be perceived as an undesired limitation.
+\end_layout
+
+\end_body
+\end_document

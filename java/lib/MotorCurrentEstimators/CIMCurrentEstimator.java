@@ -22,6 +22,9 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 * drivetrain where all motors run the same speed). Estimation is based off of a whitepaper by FRC1736 from the 2016 competition season.
 * <br>
 * <br>
+* Whitepaper link: <a href="../../../../doc/current_limiting.pdf">Current Estimation</a>.
+* <br>
+* <br>
 * USAGE:    
 * <ol>   
 * <li>Instantiate Class with proper values</li> 
