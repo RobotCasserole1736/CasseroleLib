@@ -403,12 +403,12 @@ back-EMF
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename ../../../../Users/gerthcm/Downloads/res/motor_mdl.png
+	filename motor_mdl.png
 	width 10cm
 
 \end_inset
@@ -1420,7 +1420,7 @@ catches up
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
