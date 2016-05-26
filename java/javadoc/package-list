@@ -1,4 +1,5 @@
 lib.BatteryParam
+lib.CasseroleCal
 lib.CasserolePID
 lib.HAL
 lib.LEDs
