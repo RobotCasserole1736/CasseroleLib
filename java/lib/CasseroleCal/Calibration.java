@@ -20,9 +20,10 @@ package lib.CasseroleCal;
 * a software team to control what a pit crew has control over (Shooter speed is a good
 * candidate. Port number for left drivetrain motor A is a bad candidate). 
 * <br>
+* <br>
 * USAGE:    
 * <ol>   
-* <li>Instantiate a CalWrangler first (if not done yet)</li> 
+* <li>Instantiate a CalManager first (if not done yet)</li> 
 * <li>Instantiate the calibration with a default value, and reference to the wrangler</li> 
 * <li>At runtime, use the get() method to read the calibrated value. The returned value may change depending on what the wrangler has overwritten.</li>    
 * </ol>
@@ -35,8 +36,10 @@ public class Calibration {
 	public final double default_val;
 	private final CalWrangler wrangler;
 	public final String name;
-	public double cur_val;
-	public boolean overridden;
+	public volatile double cur_val;
+	public volatile boolean overridden;
+	public double max_cal;
+	public double min_cal;
 	
 	/**
 	 * Constructor for a new calibratable value.
@@ -51,9 +54,45 @@ public class Calibration {
 		wrangler = wrangler_in;
 		name = name_in.trim();
 		overridden = false;
+		min_cal = Double.NEGATIVE_INFINITY;
+		max_cal = Double.POSITIVE_INFINITY;
 		
+		commonConstructor();
+	}
+	
+	/**
+	 * Constructor for a new calibratable value with range limiting
+	 * @param name_in String for the name of the calibration. Best to make it the same of the variable name. 
+	 * @param default_val_in Default value for the calibration. Will keep this value unless the wrangler overwrites it.
+	 * @param wrangler_in Reference to the wrangler which will control this calibration. 
+	 * @param min_in Minimum allowable calibration value. If a user attempts to override the value outside this range, a warning will be thrown and the calibrated value will be capped at the minimum.
+	 * @param max_in Maximum allowable calibration value. If a user attempts to override the value outside this range, a warning will be thrown and the calibrated value will be capped at the maximum.
+	 */
+	Calibration(String name_in, double default_val_in, CalWrangler wrangler_in, double min_in, double max_in){
+		
+		/*default stuff and stuff*/
+		wrangler = wrangler_in;
+		name = name_in.trim();
+		min_cal = min_in;
+		max_cal = max_in;
+		
+		//Cross-check that default value is in-range
+		if(default_val_in < min_cal){
+			System.out.println("Warning: Calibration: Default value for " + name + " is too small. Setting default value to minimum value of " + Double.toString(min_cal));
+			default_val = min_cal;
+		} else if(default_val_in > max_cal){
+			System.out.println("Warning: Calibration: Default value for " + name + " is too large. Setting default value to maximum value of " + Double.toString(max_cal));
+			default_val = max_cal;
+		} else {
+			default_val = default_val_in;
+		}
+		
+		commonConstructor();		
+	}
+	
+	private void commonConstructor(){
+		overridden = false;
 		wrangler.register(this);
-		
 	}
 	
 	/**
