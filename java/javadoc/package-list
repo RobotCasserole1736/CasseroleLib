@@ -1,5 +1,6 @@
 lib.BatteryParam
 lib.CasseroleCal
+lib.CasseroleHourmeter
 lib.CasserolePID
 lib.HAL
 lib.LEDs
