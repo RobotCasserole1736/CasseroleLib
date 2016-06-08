@@ -47,7 +47,7 @@ public class Calibration {
 	 * @param default_val_in Default value for the calibration. Will keep this value unless the wrangler overwrites it.
 	 * @param wrangler_in Reference to the wrangler which will control this calibration. 
 	 */
-	Calibration(String name_in, double default_val_in, CalWrangler wrangler_in){
+	public Calibration(String name_in, double default_val_in, CalWrangler wrangler_in){
 		
 		/*default stuff and stuff*/
 		default_val = default_val_in;
