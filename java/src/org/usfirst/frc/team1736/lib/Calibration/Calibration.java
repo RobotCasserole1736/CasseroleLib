@@ -69,7 +69,7 @@ public class Calibration {
 	 * @param min_in Minimum allowable calibration value. If a user attempts to override the value outside this range, a WARNING: will be thrown and the calibrated value will be capped at the minimum.
 	 * @param max_in Maximum allowable calibration value. If a user attempts to override the value outside this range, a WARNING: will be thrown and the calibrated value will be capped at the maximum.
 	 */
-	Calibration(String name_in, double default_val_in, CalWrangler wrangler_in, double min_in, double max_in){
+	public Calibration(String name_in, double default_val_in, CalWrangler wrangler_in, double min_in, double max_in){
 		
 		/*default stuff and stuff*/
 		wrangler = wrangler_in;
