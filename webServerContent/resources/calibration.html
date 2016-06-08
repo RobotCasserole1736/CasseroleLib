@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html>
+<title>Casserole Data Calibration</title>
+
+<head>
+  <link rel="stylesheet" href="./main.css">
+</head>
+
+<body>
+
+<h1>Robot Calibrations</h1>
+<hr>
+<div/>
+<h3>Status:</h3>
+<div id="id01">Socket Not Open</div>
+
+<br>
+
+<button id="save_btn" type="button" onclick="handleSaveBtnClick()">Save to File</button> 
+
+<br>
+
+<div id="id02"></div>
+
+<!-- Common navigation bar -->
+<hr>
+<div style="background-color:#ce7777">
+<p>
+<a href="./../index.html">Home</a>
+        
+<a href="./presentState.html">State Data</a>
+        
+<a href="./calibration.html">Calibration</a>
+        
+<a href="./driverView.html">Driver View</a>
+</p>
+</div>
+<!-- END Common navigation bar -->
+
+
+
+<script>
+var dataSocket = new WebSocket("ws://127.0.0.1:8080/calstream")
+
+dataSocket.onopen = function (event) {
+  document.getElementById("id01").innerHTML = "Socket Opened.";
+};
+
+dataSocket.onerror = function (error) {
+  document.getElementById("id01").innerHTML = "Error with socket!";
+};
+
+dataSocket.onclose = function (error) {
+  document.getElementById("id01").innerHTML = "Socket Closed.";
+};
+
+dataSocket.onmessage = function (event) {
+  genTable(event.data);
+
+};
+
+function genTable(json_data) {
+    var arr = JSON.parse(json_data);
+    var i;
+    var out = "<table border=\"1\">";
+    
+    out += "<tr><td>" +
+           "Cal Name" +
+           "</td><td style=\"width: 100px;\">" +
+           "Default Val" +
+           "</td><td style=\"width: 100px;\">" +
+           "Minimum Val" +
+           "</td><td style=\"width: 100px;\">" +
+           "Maximum Val" +
+           "</td><td style=\"width: 75px;\">" +
+           "Overridden" +
+           "</td><td style=\"width: 100px;\">" +
+           "Current Val" +
+           "</td><td style=\"width: 100px;\">" +
+           "New Val" +
+           "</td><td>" + //blank col. for apply button
+           "</td><td>" + //blank col. for reset button
+           "</td></tr>";
+    
+    for(i = 0; i < arr.cal_array.length; i++) {
+        out += "<tr><td>" +
+               arr.cal_array[i].name +
+               "</td><td style=\"width: 100px;\">" +
+               arr.cal_array[i].dflt_val +
+               "</td><td style=\"width: 100px;\">" +
+               arr.cal_array[i].min_val +
+               "</td><td style=\"width: 100px;\">" +
+               arr.cal_array[i].max_val +
+               "</td><td style=\"width: 75px;\">" +
+               arr.cal_array[i].ovrdn +
+               "</td><td style=\"width: 100px;\">" +
+               arr.cal_array[i].cur_val +
+               "</td><td style=\"width: 100px;\">" +
+               "<input type=\"number\" name=\""+ arr.cal_array[i].name +"\" id=\""+arr.cal_array[i].name+"_submit_val\">" +
+               "</td><td>" + 
+               "<button id=\""+arr.cal_array[i].name+"_submit_btn\" type=\"button\" onclick=\"handleApplyButtonClick("+arr.cal_array[i].name+"_submit_val"+")\">Apply</button>" +
+               "</td><td>" + 
+               "<button id=\""+arr.cal_array[i].name+"_reset_btn\" type=\"button\" onclick=\"handleResetButtonClick("+arr.cal_array[i].name+"_submit_val"+")\">Reset</button>" +
+               "</td></tr>";
+    }
+    out += "</table>";
+    document.getElementById("id02").innerHTML = out;
+}
+
+function handleApplyButtonClick(input_box){
+    var val_string = input_box.value;
+    var val = parseFloat(val_string);
+    
+    if(val == NaN){
+        document.getElementById("id01").innerHTML = "Error: " + val_string + " is not a number!";
+    } else {
+        dataSocket.send("set:"+input_box.name+":"+val); 
+    }
+
+}
+
+function handleResetButtonClick(input_box){
+    dataSocket.send("reset:"+input_box.name); 
+}
+
+function handleSaveBtnClick(){
+    dataSocket.send("save"); 
+}
+
+</script>
+
+</body>
+</html>
+

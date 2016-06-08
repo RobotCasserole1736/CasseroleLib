@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html>
+<title>Casserole Driver Data View</title>
+
+<head>
+  <link rel="stylesheet" href="./main.css">
+</head>
+
+<body>
+
+<h1>FRC 1736 Driver View</h1>
+<hr>
+<div/>
+<h3>COM Status:</h3>
+<div id="id01">Socket Not Open</div>
+
+<br>
+
+<canvas id="dial1" width="200" height="200" style="background-color:#333"></canvas>
+<canvas id="dial2" width="200" height="200" style="background-color:#333"></canvas>
+<canvas id="dial3" width="200" height="200" style="background-color:#333"></canvas>
+
+<br>
+
+<!-- Common navigation bar -->
+<hr>
+<div style="background-color:#ce7777">
+<p>
+<a href="./../index.html">Home</a>
+        
+<a href="./presentState.html">State Data</a>
+        
+<a href="./calibration.html">Calibration</a>
+        
+<a href="./driverView.html">Driver View</a>
+</p>
+</div>
+<!-- END Common navigation bar -->
+
+
+
+<script>
+var dataSocket = new WebSocket("ws://127.0.0.1:8080/driverviewstream")
+var numTransmissions = 0;
+var canvas = document.getElementById("dial1");
+var ctx = canvas.getContext("2d");
+var radius = canvas.height / 2;
+var min = 0;
+var max = 200;
+var step = 20;
+var value = 187.23;
+var name = "Test Name cool! (RPM)"
+
+
+ctx.translate(radius, radius);
+radius = radius * 0.90
+drawDial();
+
+function drawDial() {
+    drawFace(ctx, radius);
+    drawNumbers(ctx, radius)
+    drawHand(ctx, (value)/(max-min)*(1.5*Math.PI) + 1.25*Math.PI)
+    drawName(ctx, name);
+    drawValue(ctx, value);
+}
+
+function drawFace(ctx, radius) {
+    var grad;
+
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0.75*Math.PI, 2.25*Math.PI);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    grad = ctx.createRadialGradient(0,0,radius*0.95, 0,0,radius*1.05);
+    grad.addColorStop(0, '#333');
+    grad.addColorStop(0.5, 'white');
+    grad.addColorStop(1, '#333');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = radius*0.1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, radius*0.1, 0, 2*Math.PI);
+    ctx.fillStyle = '#333';
+    ctx.fill();
+}
+
+function drawNumbers(ctx, radius) {
+    var ang;
+    var num;
+    ctx.font = radius*0.15 + "px arial";
+    ctx.textBaseline="middle";
+    ctx.textAlign="center";
+    for(num= min; num <= max; num+=step){
+        ang = (num/step * (step/(max-min)) * (1.5*Math.PI))  + 1.25*Math.PI;
+        ctx.rotate(ang);
+        ctx.translate(0, -radius*0.85);
+        ctx.rotate(-ang);
+        ctx.fillText(num.toString(), 0, 0);
+        ctx.rotate(ang);
+        ctx.translate(0, radius*0.85);
+        ctx.rotate(-ang);
+    }
+}
+
+function drawName(ctx, name){
+    ctx.translate(0, radius*0.9);
+    ctx.font=radius*0.18 + "px arial";
+    ctx.fillStyle="#EE0000";
+    ctx.fillText(name, 0, 0);
+    ctx.translate(0, -radius*0.9);
+
+} 
+
+function drawValue(ctx, value){
+    ctx.translate(0, radius*0.4);
+    ctx.font=radius*0.18 + "px arial";
+    ctx.fillStyle="#00AA00";
+    ctx.fillText(value.toString(), 0, 0);
+    ctx.translate(0, -radius*0.4);
+
+} 
+
+function drawHand(ctx, pos) {
+    ctx.beginPath();
+    ctx.lineWidth = radius*0.08;
+    ctx.lineCap = "round";
+    ctx.moveTo(0,0);
+    ctx.rotate(pos);
+    ctx.lineTo(0, -radius*0.7);
+    ctx.stroke();
+    ctx.rotate(-pos);
+}
+
+dataSocket.onopen = function (event) {
+  document.getElementById("id01").innerHTML = "Socket Open";
+};
+
+dataSocket.onerror = function (error) {
+  document.getElementById("id01").innerHTML = "Error with socket";
+};
+
+dataSocket.onmessage = function (event) {
+  genTable(event.data);
+  numTransmissions = numTransmissions + 1;
+  document.getElementById("id01").innerHTML = "Socket Open. RX Count:" + numTransmissions; 
+};
+
+</script>
+
+</body>
+</html>
+

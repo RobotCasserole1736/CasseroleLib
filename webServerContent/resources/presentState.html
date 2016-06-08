@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+
+<html>
+<title>Casserole Data Live State View</title>
+
+<head>
+  <link rel="stylesheet" href="./main.css">
+</head>
+
+<body>
+
+<h1>Data From Robot</h1>
+<hr>
+<div/>
+<h3>Status:</h3>
+<div id="id01">Socket Not Open</div>
+
+<br>
+
+<div id="id02"></div>
+
+<!-- Common navigation bar -->
+<hr>
+<div style="background-color:#ce7777">
+<p>
+<a href="./../index.html">Home</a>
+        
+<a href="./presentState.html">State Data</a>
+        
+<a href="./calibration.html">Calibration</a>
+        
+<a href="./driverView.html">Driver View</a>
+</p>
+</div>
+<!-- END Common navigation bar -->
+
+
+
+<script>
+var dataSocket = new WebSocket("ws://127.0.0.1:8080/statestream")
+var numTransmissions = 0;
+
+dataSocket.onopen = function (event) {
+  document.getElementById("id01").innerHTML = "Socket Open";
+  dataSocket.send("Client Says: Can I haz data?"); 
+};
+
+dataSocket.onerror = function (error) {
+  document.getElementById("id01").innerHTML = "Error with socket";
+};
+
+dataSocket.onmessage = function (event) {
+  genTable(event.data);
+  numTransmissions = numTransmissions + 1;
+  document.getElementById("id01").innerHTML = "Socket Open. RX Count:" + numTransmissions; 
+};
+
+function genTable(json_data) {
+    var arr = JSON.parse(json_data);
+    var i;
+    var out = "<table border=\"1\">";
+
+    for(i = 0; i < arr.state_array.length; i++) {
+        out += "<tr><td>" +
+        arr.state_array[i].name +
+        "</td><td style=\"width: 200px;\">" +
+        arr.state_array[i].value +
+        "</td></tr>";
+    }
+    out += "</table>";
+    document.getElementById("id02").innerHTML = out;
+}
+
+</script>
+
+</body>
+</html>
+

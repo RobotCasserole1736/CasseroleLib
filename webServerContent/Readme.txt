@@ -1,0 +1,1 @@
+These files are web content and java libraries for Jetty, which are to be used with the casserole Webserver library.
