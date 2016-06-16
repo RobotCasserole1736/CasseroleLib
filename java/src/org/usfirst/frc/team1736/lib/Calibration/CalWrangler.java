@@ -171,7 +171,8 @@ public class CalWrangler {
 	}
 	
 	/**
-	 * Writes present set of cal values over 
+	 * Writes present set of cal values over existing ones on file. Saving will ensure that cal overrides persist over disable/enable cycles.
+	 * A status box is generated on the webpage for failed or successful overwrites.
 	 * @return 0 on success, -1 on writing errors
 	 */
 	public int saveCalValues(){
