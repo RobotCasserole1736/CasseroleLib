@@ -4,7 +4,7 @@
 <title>Casserole Data Live State View</title>
 
 <head>
-  <link rel="stylesheet" href="./main.css">
+  <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
@@ -12,8 +12,7 @@
 <h1>Data From Robot</h1>
 <hr>
 <div/>
-<h3>Status:</h3>
-<div id="id01">Socket Not Open</div>
+<div id="id01">COM Status: Socket Not Open</div>
 
 <br>
 
@@ -23,13 +22,13 @@
 <hr>
 <div style="background-color:#ce7777">
 <p>
-<a href="./../index.html">Home</a>
+<a href="index.html">Home</a>
         
-<a href="./presentState.html">State Data</a>
+<a href="presentState.html">State Data</a>
         
-<a href="./calibration.html">Calibration</a>
+<a href="calibration.html">Calibration</a>
         
-<a href="./driverView.html">Driver View</a>
+<a href="driverView.html">Driver View</a>
 </p>
 </div>
 <!-- END Common navigation bar -->
@@ -42,17 +41,16 @@ var numTransmissions = 0;
 
 dataSocket.onopen = function (event) {
   document.getElementById("id01").innerHTML = "Socket Open";
-  dataSocket.send("Client Says: Can I haz data?"); 
 };
 
 dataSocket.onerror = function (error) {
-  document.getElementById("id01").innerHTML = "Error with socket";
+  document.getElementById("id01").innerHTML = "COM Status: Error with socket";
 };
 
 dataSocket.onmessage = function (event) {
   genTable(event.data);
   numTransmissions = numTransmissions + 1;
-  document.getElementById("id01").innerHTML = "Socket Open. RX Count:" + numTransmissions; 
+  document.getElementById("id01").innerHTML = "COM Status: Socket Open. RX Count:" + numTransmissions; 
 };
 
 function genTable(json_data) {
