@@ -1,8 +1,10 @@
 package org.usfirst.frc.team1736.lib.Calibration;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -53,6 +55,7 @@ public class CalWrangler {
 	private final int NUM_COLUMNS = 2;
 	
 	public ArrayList<Calibration> registeredCals;
+	//final String calFile = "C:\\Users\\Chris Gerth\\Desktop\\cal_setup.csv";
 	final String calFile = "/U/calibration/present_cal.csv";
 	
 	/**
@@ -165,6 +168,54 @@ public class CalWrangler {
 			return 0;
 		}
 
+	}
+	
+	/**
+	 * Writes present set of cal values over 
+	 * @return 0 on success, -1 on writing errors
+	 */
+	public int saveCalValues(){
+		BufferedWriter br = null;
+		boolean errors_present = false;
+		
+		try {
+			//open file with overwriting
+			br = new BufferedWriter(new FileWriter(calFile, false));
+			
+			//Write all overridden cals to file
+			for(Calibration cal :  registeredCals){
+				if(cal.overridden){
+					br.write(cal.name+","+Double.toString(cal.cur_val)+"\n");
+				}
+				
+			}
+			//Close out cal file
+			br.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.out.println("ERROR: Calibration Wrangler: Cal File not found! Cannot open file " + calFile + " for reading. Leaving all calibrations at default values.");
+			errors_present = true;
+		} catch (IOException e) {
+			System.out.println("ERROR: Calibration Wrangler: Cannot open file " + calFile + " for writing.");
+			e.printStackTrace();
+			errors_present = true;
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		//Indicate any errors
+		if(errors_present){
+			return -1;
+		}else{
+			return 0;
+		}
 	}
 	
 	/**

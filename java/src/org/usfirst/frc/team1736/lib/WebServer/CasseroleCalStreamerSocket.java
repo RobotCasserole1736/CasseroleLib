@@ -19,7 +19,11 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
     public void onWebSocketText(String message) {
         if (isConnected()) {
         	if(message.equals("save")){
-        		
+        		if(CassesroleWebStates.getCalWrangler().saveCalValues() != 0){
+        			broadcastMsg("Error! Cannot write to cal file.");
+        		} else {
+        			broadcastMsg("Success! Cal file re-written.");
+        		}
         	} else {
         		String[] messageParts = message.split(":");
         		//Parse 3-part messages
@@ -66,6 +70,22 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
     }
     
 	/**
+	 * send a string message over the socket to notify the user of something.
+	 */
+	public void broadcastMsg(String msg) {
+        try {
+        	JSONObject full_obj = new JSONObject();
+        	//package array into object
+        	full_obj.put("type", "msg");
+        	full_obj.put("msg_text", msg);
+    		getRemote().sendString(full_obj.toJSONString());
+		
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+        }
+	}
+    
+	/**
 	 * send socket data out to client
 	 */
 	public void broadcastData() {
@@ -89,6 +109,7 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
             	}
             	
             	//package array into object
+            	full_obj.put("type", "cal_vals");
             	full_obj.put("cal_array", data_array);
         		getRemote().sendString(full_obj.toJSONString());
         		
