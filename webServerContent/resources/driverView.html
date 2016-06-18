@@ -41,7 +41,7 @@
 
 
 <script>
-var dataSocket = new WebSocket("ws://127.0.0.1:8080/driverviewstream")
+var dataSocket = new WebSocket("ws://roboRIO-1736-FRC.local:5800/driverviewstream")
 var numTransmissions = 0;
 var dials = [];
 
@@ -72,11 +72,14 @@ casseroleDial.prototype.init = function(){
 }
 
 casseroleDial.prototype.setValue = function(new_value){
-    this.undrawHand();
-    this.undrawValue();
+    
+    //draw-over background This resets to a blank dial.
+    this.drawFace();
+    
     this.value = new_value;
     this.drawHand();
     this.drawValue();
+    this.drawNumbers(); //Just in case the hand goes over the numbers
 }
 
 casseroleDial.prototype.drawFullDial = function() {
@@ -85,8 +88,6 @@ casseroleDial.prototype.drawFullDial = function() {
     this.drawNumbers();
     this.drawName();
     
-    //Save the constant parts
-    this.ctx.save(); 
     
     //draw the variable parts of the dial
     this.drawHand();
@@ -147,15 +148,6 @@ casseroleDial.prototype.drawValue = function() {
 
 } 
 
-casseroleDial.prototype.undrawValue = function() {
-    this.ctx.translate(0, this.radius*0.4);
-    this.ctx.font="bold " + this.radius*0.2 + "px arial";
-    this.ctx.fillStyle=this.bgcolor;
-    this.ctx.fillText(this.value.toString(), 0, 0);
-    this.ctx.translate(0, -this.radius*0.4);
-
-} 
-
 casseroleDial.prototype.drawHand = function() {
     var pos = (this.value-this.min)/(this.max-this.min)*(1.5*Math.PI) + 1.25*Math.PI;
     this.ctx.strokeStyle=this.handcolor;
@@ -172,19 +164,6 @@ casseroleDial.prototype.drawHand = function() {
     this.ctx.arc(0, 0, this.radius*0.1, 0, 2*Math.PI);
     this.ctx.fillStyle = this.handcolor;
     this.ctx.fill();
-}
-
-casseroleDial.prototype.undrawHand = function() {
-    var pos = (this.value-this.min)/(this.max-this.min)*(1.5*Math.PI) + 1.25*Math.PI;
-    this.ctx.strokeStyle=this.bgcolor;
-    this.ctx.beginPath();
-    this.ctx.lineWidth = this.radius*0.10;
-    this.ctx.lineCap = "round";
-    this.ctx.moveTo(0,0);
-    this.ctx.rotate(pos);
-    this.ctx.lineTo(0, -this.radius*0.7);
-    this.ctx.stroke();
-    this.ctx.rotate(-pos);
 }
 
 //END Dial Class

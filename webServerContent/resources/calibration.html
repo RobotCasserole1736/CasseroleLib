@@ -40,7 +40,7 @@
 
 
 <script>
-var dataSocket = new WebSocket("ws://127.0.0.1:8080/calstream")
+var dataSocket = new WebSocket("ws://roboRIO-1736-FRC.local:5800/calstream")
 
 dataSocket.onopen = function (event) {
   document.getElementById("id01").innerHTML = "COM Status: Socket Opened.";
