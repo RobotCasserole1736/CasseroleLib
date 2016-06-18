@@ -1,4 +1,4 @@
-package org.usfirst.frc.team1736.robot;
+package org.usfirst.frc.team1736.lib.SignalMath;
 
 import edu.wpi.first.wpilibj.Timer;
 
