@@ -1,15 +1,17 @@
 package org.usfirst.frc.team1736.lib.WebServer;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.json.simple.JSONObject;
 import org.usfirst.frc.team1736.lib.Calibration.CalWrangler;
 
-public class CassesroleDriverView {
+public class CasseroleDriverView {
 	/** The list of objects which are broadcast. Must be volatile to ensure atomic accesses */
-	static volatile List<JSONObject> driverView_objects = new ArrayList<JSONObject>();
+	static volatile Hashtable<String, JSONObject> driverView_objects = new Hashtable<String, JSONObject>();
 	static volatile List<String> dial_vals = new ArrayList<String>();
+	static volatile List<String> ordered_obj_name_list = new ArrayList<String>(); //Used to help preserve the order the user creates the dials in, since the hash table destroys this info
 	
 	static int num_dials = 0;
 	
@@ -34,17 +36,20 @@ public class CassesroleDriverView {
 		new_obj.put("max", max_in);
 		new_obj.put("step", step_in);
 		dial_vals.add(String.format(VAL_DISPLAY_FORMATTER, min_in));
-		driverView_objects.add(new_obj);
+		driverView_objects.put(name_in, new_obj);
+		ordered_obj_name_list.add(name_in);
 		num_dials += 1;
 		return;
 	}
 	
-	public static void newWebcam(String url_in){
+	public static void newWebcam(String url_in, String name_in){
 		//Create new object
 		JSONObject new_obj = new JSONObject();
 		new_obj.put("type", "webcam");
+		new_obj.put("name", name_in);
 		new_obj.put("url", url_in);
-		driverView_objects.add(new_obj);
+		driverView_objects.put(name_in, new_obj);
+		ordered_obj_name_list.add(name_in);
 		return;
 	}
 	
@@ -52,13 +57,12 @@ public class CassesroleDriverView {
 	public static synchronized void setDialValue(String name_in, double value_in){
 		int index = -1;
 		
-		//look for index of dial to update
-		for(JSONObject obj : driverView_objects){
-			if(obj.get("type").equals("dial") & obj.get("name").equals(name_in) ){
-				index = (int) obj.get("index");
-				dial_vals.set(index, String.format(VAL_DISPLAY_FORMATTER, Math.min((double)obj.get("max"), Math.max((double)obj.get("min"), value_in))));
-				return;
-			}
+		
+		if(driverView_objects.containsKey(name_in)){
+			JSONObject obj_tmp = driverView_objects.get(name_in);
+			index = (int) obj_tmp.get("index");
+			dial_vals.set(index, String.format(VAL_DISPLAY_FORMATTER, Math.min((double)obj_tmp.get("max"), Math.max((double)obj_tmp.get("min"), value_in))));
+			return;
 		}
 		
 		//If we get here, it means we didn't find the value

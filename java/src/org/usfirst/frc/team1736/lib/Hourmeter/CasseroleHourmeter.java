@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.Thread.State;
 import java.util.TimerTask;
 
@@ -72,6 +71,9 @@ public class CasseroleHourmeter {
 			}
 		} else {
 			ret_val = readCurrentValuesFromHourmeterFile();
+			if(ret_val != 0){
+				System.out.println("ERROR: Parse error while reading initial values from hourmeter file.");
+			}
 		}
 		
 		// Presuming we were able to initialize the hourmeter, kick off the periodic update.
@@ -124,24 +126,25 @@ public class CasseroleHourmeter {
 	}
 	
 	private int writeCurrentValuesToHourmeterFile(){
+		String fcontents = "";
 		try{
-			//Open File
-			FileWriter fstream = new FileWriter(HOURMETER_FNAME, false);
-			BufferedWriter log_file = new BufferedWriter(fstream);
 			
-			//Write the lines. Changes here will need corresponding updates in the read function.
-			log_file.write("TOTAL_MINUTES:"+Double.toString(minutesTotal)+"\n");
-			log_file.write("DISABLED_MINUTES:"+Double.toString(minutesDisabled)+"\n");
-			log_file.write("TELEOP_MINUTES:"+Double.toString(minutesTeleop)+"\n");
-			log_file.write("AUTO_MINUTES:"+Double.toString(minutesAutonomous)+"\n");
-			log_file.write("TEST_MINUTES:"+Double.toString(minutesTest)+"\n");
-			log_file.write("TELEOP_ENABLES:"+Double.toString(numTeleopEnables)+"\n");
-			log_file.write("AUTO_ENABLES:"+Double.toString(numAutonomousEnables)+"\n");
-			log_file.write("TEST_ENABLES:"+Double.toString(numTestEnables)+"\n");
+			//Define the lines. Changes here will need corresponding updates in the read function.
+			fcontents += ("TOTAL_MINUTES:"+Double.toString(minutesTotal)+"\n");
+			fcontents += ("DISABLED_MINUTES:"+Double.toString(minutesDisabled)+"\n");
+			fcontents += ("TELEOP_MINUTES:"+Double.toString(minutesTeleop)+"\n");
+			fcontents += ("AUTO_MINUTES:"+Double.toString(minutesAutonomous)+"\n");
+			fcontents += ("TEST_MINUTES:"+Double.toString(minutesTest)+"\n");
+			fcontents += ("TELEOP_ENABLES:"+Double.toString(numTeleopEnables)+"\n");
+			fcontents += ("AUTO_ENABLES:"+Double.toString(numAutonomousEnables)+"\n");
+			fcontents += ("TEST_ENABLES:"+Double.toString(numTestEnables)+"\n");
 			
+			//Write contents to file. This is done as quickly as possisble to minimize corruption in the event of a power failure during write.
+			FileWriter log_file = new FileWriter(HOURMETER_FNAME, false);
+			log_file.write(fcontents);
 			log_file.close();
 			
-		} catch	(IOException e ){
+		} catch	(Exception e ){
 			System.out.println("ERROR: cannot write to hourmeter file:" + e.getMessage());
 			return -1;
 		}
@@ -223,7 +226,7 @@ public class CasseroleHourmeter {
 			}
 			
 			log_file.close();
-		} catch	(IOException e){
+		} catch	(Exception e){
 			System.out.println("ERROR: cannot read from hourmeter file:" + e.getMessage());
 			return -1;
 		}
@@ -280,6 +283,7 @@ public class CasseroleHourmeter {
 	 * @return
 	 */
 	private int initNewHourmeterFile(){
+		System.out.println("WARNING: New hourmeter file being set up!");
 		minutesTotal = 0;
 		minutesDisabled = 0;
 		minutesTeleop = 0;

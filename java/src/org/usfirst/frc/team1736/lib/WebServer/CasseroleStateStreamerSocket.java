@@ -56,10 +56,10 @@ public class CasseroleStateStreamerSocket extends WebSocketAdapter {
             	JSONArray data_array = new JSONArray();
             	
             	//Package all data array elements into a JSON array
-            	for(JSONObject obj : CassesroleWebStates.data_array_elements){
-            		data_array.add(obj);
+            	for(String name : CassesroleWebStates.ordered_state_name_list){
+            		data_array.add(CassesroleWebStates.data_array_elements.get(name));
             	}
-            	
+
             	//package array into object
             	full_obj.put("state_array", data_array);
         		getRemote().sendString(full_obj.toJSONString());
