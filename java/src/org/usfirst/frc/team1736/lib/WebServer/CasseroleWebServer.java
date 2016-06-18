@@ -5,11 +5,34 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
+/**
+ * DESCRIPTION:
+ * <br>
+ * Basic controls for a customized Jetty embedded webserver, serving up a fixed number of useful pages for displaying robot
+ * data and calibration information.
+ * <br>
+ * ASSUMPTIONS:
+ * <br>
+ * Be sure to use the DriverView and WebStates classes to assign content into the web pages.
+ * <br>
+ * USAGE:    
+ * <ol>   
+ * <li>Instantiate class</li> 
+ * <li>On init, assign content to web pages.</li>
+ * <li>Call startServer just before the robot enters disabled mode for the first time.</li>
+ * </ol>
+ * 
+ *
+ */
+
 public class CasseroleWebServer {
 	
 
 	static Server server;
 	
+	/**
+	 * Starts the web server in a new thread. Should be called at the end of robot initialization.
+	 */
 	public void startServer(){
 		
 		final boolean LOCAL_PC_DEBUG_PATHS = false;

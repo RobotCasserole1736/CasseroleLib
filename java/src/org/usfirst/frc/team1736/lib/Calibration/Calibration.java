@@ -34,7 +34,6 @@ package org.usfirst.frc.team1736.lib.Calibration;
 
 public class Calibration {
 	public final double default_val;
-	private final CalWrangler wrangler;
 	public final String name;
 	public volatile double cur_val;
 	public volatile boolean overridden;
@@ -47,12 +46,11 @@ public class Calibration {
 	 * @param default_val_in Default value for the calibration. Will keep this value unless the wrangler overwrites it.
 	 * @param wrangler_in Reference to the wrangler which will control this calibration. 
 	 */
-	public Calibration(String name_in, double default_val_in, CalWrangler wrangler_in){
+	public Calibration(String name_in, double default_val_in){
 		
 		/*default stuff and stuff*/
 		default_val = default_val_in;
 		cur_val = default_val;
-		wrangler = wrangler_in;
 		name = name_in.trim();
 		overridden = false;
 		min_cal = Double.NEGATIVE_INFINITY;
@@ -69,10 +67,9 @@ public class Calibration {
 	 * @param min_in Minimum allowable calibration value. If a user attempts to override the value outside this range, a WARNING: will be thrown and the calibrated value will be capped at the minimum.
 	 * @param max_in Maximum allowable calibration value. If a user attempts to override the value outside this range, a WARNING: will be thrown and the calibrated value will be capped at the maximum.
 	 */
-	public Calibration(String name_in, double default_val_in, CalWrangler wrangler_in, double min_in, double max_in){
+	public Calibration(String name_in, double default_val_in, double min_in, double max_in){
 		
 		/*default stuff and stuff*/
-		wrangler = wrangler_in;
 		name = name_in.trim();
 		min_cal = min_in;
 		max_cal = max_in;
@@ -85,7 +82,7 @@ public class Calibration {
 	
 	private void commonConstructor(){
 		overridden = false;
-		wrangler.register(this);
+		CalWrangler.register(this);
 	}
 	
 	private double limitRange(double in){

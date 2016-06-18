@@ -11,6 +11,12 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
 import java.util.Timer;
 
+/**
+ * DESCRIPTION:
+ * <br>
+ * Private socket definition class that Jetty wants me to make public even though it doesn't actually have to be. Don't use this for anything unless you know preciisely what you are doing.
+ */
+
 public class CasseroleCalStreamerSocket extends WebSocketAdapter {
 	volatile int test_data;
 	
@@ -19,7 +25,7 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
     public void onWebSocketText(String message) {
         if (isConnected()) {
         	if(message.equals("save")){
-        		if(CassesroleWebStates.getCalWrangler().saveCalValues() != 0){
+        		if(CalWrangler.saveCalValues() != 0){
         			broadcastMsg("Error! Cannot write to cal file.");
         		} else {
         			broadcastMsg("Success! Cal file re-written.");
@@ -32,7 +38,7 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
         			String name = messageParts[1];
         			double val = Double.parseDouble(messageParts[2]);
         			if(cmd.equals("set")){
-	        			Calibration cal_to_update = CassesroleWebStates.getCalWrangler().getCalFromName(name);
+	        			Calibration cal_to_update = CalWrangler.getCalFromName(name);
 	        			if(!Double.isFinite(val)){
 	        				System.out.println("ERROR: CalStreamer: Invalid value recieved " + Double.toString(val));
 	        			} else {
@@ -44,7 +50,7 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
         			String cmd = messageParts[0];
         			String name = messageParts[1];
         			if(cmd.equals("reset")){
-	        			Calibration cal_to_update = CassesroleWebStates.getCalWrangler().getCalFromName(name);
+	        			Calibration cal_to_update = CalWrangler.getCalFromName(name);
 	        			cal_to_update.reset();
         			}
         		} else {
@@ -90,7 +96,7 @@ public class CasseroleCalStreamerSocket extends WebSocketAdapter {
 	 */
 	public void broadcastData() {
         if (isConnected()) {
-        	Calibration[] allCals = CassesroleWebStates.getCalWrangler().registeredCals.toArray(new Calibration[CassesroleWebStates.getCalWrangler().registeredCals.size()]);
+        	Calibration[] allCals = CalWrangler.registeredCals.toArray(new Calibration[CalWrangler.registeredCals.size()]);
         	
             try {
             	JSONObject full_obj = new JSONObject();

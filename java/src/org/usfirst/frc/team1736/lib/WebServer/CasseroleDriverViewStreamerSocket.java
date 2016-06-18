@@ -9,6 +9,12 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
 import java.util.Timer;
 
+/**
+ * DESCRIPTION:
+ * <br>
+ * Private socket definition class that Jetty wants me to make public even though it doesn't actually have to be. Don't use this for anything unless you know preciisely what you are doing.
+ */
+
 public class CasseroleDriverViewStreamerSocket extends WebSocketAdapter {
 	private java.util.Timer updater = new java.util.Timer(); 
 	private int updatePeriodMS = 100; //default update rate of 0.1s 

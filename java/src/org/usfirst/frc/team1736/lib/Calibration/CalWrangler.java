@@ -2,6 +2,7 @@ package org.usfirst.frc.team1736.lib.Calibration;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -33,14 +34,14 @@ import java.util.ArrayList;
 * <br>
 * <br>
 * Ex:
+* <br>
 * ShooterSpeed,3200.5 <br>
 * Pgain,0.125 <br>
 * <br>
 * <br>
 * USAGE:    
 * <ol>   
-* <li>Instantiate a CalManager first</li> 
-* <li>Each calibration will register itself with this wrangler upon instantiation</li> 
+* <li>Each calibration will register itself with this static wrangler upon instantiation</li> 
 * <li>At the start of teleop or autonomous, call the loadCalValues() method to update cal values based on .csv file values </li>    
 * </ol>
 * 
@@ -50,22 +51,15 @@ import java.util.ArrayList;
 
 public class CalWrangler {
 	
-	private final int CAL_NAME_COL = 0;
-	private final int CAL_VAL_COL = 1;
-	private final int NUM_COLUMNS = 2;
+	private static final int CAL_NAME_COL = 0;
+	private static final int CAL_VAL_COL = 1;
+	private static final int NUM_COLUMNS = 2;
 	
-	public ArrayList<Calibration> registeredCals;
+	/** Full set of all registered calibrations on this robot*/
+	static public ArrayList<Calibration> registeredCals = new ArrayList<Calibration>(0);
 	//final String calFile = "C:\\Users\\Chris Gerth\\Desktop\\cal_setup.csv";
-	final String calFile = "/U/calibration/present_cal.csv";
+	static final String calFile = "/U/calibration/present_cal.csv";
 	
-	/**
-	 * Constructor. Just does init on internal values.
-	 */
-	
-	public CalWrangler(){
-		registeredCals = new ArrayList<Calibration>(0);
-		return;
-	}
 	
 	/**
 	 * Reads from the calibration .csv file and overwrites present calibration values
@@ -73,7 +67,7 @@ public class CalWrangler {
 	 * any values possible, but on failure will just leave the values at default.
 	 * @return 0 on success, -1 if cal file not found, 
 	 */
-	public int loadCalValues(){
+	static public int loadCalValues(){
 		BufferedReader br = null;
 		String str_line;
 		boolean errors_present = false;
@@ -175,11 +169,16 @@ public class CalWrangler {
 	 * A status box is generated on the webpage for failed or successful overwrites.
 	 * @return 0 on success, -1 on writing errors
 	 */
-	public int saveCalValues(){
+	static public int saveCalValues(){
 		BufferedWriter br = null;
 		boolean errors_present = false;
 		
 		try {
+			//create directories, if they don't exist
+			File tempFobj = new File(calFile);
+			File tempPathObj = new File(tempFobj.getParent());
+			tempPathObj.mkdirs();
+			
 			//open file with overwriting
 			br = new BufferedWriter(new FileWriter(calFile, false));
 			
@@ -224,7 +223,7 @@ public class CalWrangler {
 	 * @return 0 on success, nonzero on failure
 	 */
 	
-	public int resetAllCalsToDefault(){
+	static public int resetAllCalsToDefault(){
 		for(Calibration cal :  registeredCals){
 			cal.reset();
 		}
@@ -239,7 +238,7 @@ public class CalWrangler {
 	 * @param cal_in The calibration to add to this wrangler.
 	 * @return 0 on success, nonzero on failure
 	 */
-	public int register(Calibration cal_in){
+	static public int register(Calibration cal_in){
 		int ret_val = 0;
 		if(registeredCals.contains(cal_in)){
 			System.out.println("WARNING: Calibration Wrangler: " + cal_in.name + " has already been added to the cal wrangler. Nothing done.");
@@ -256,7 +255,7 @@ public class CalWrangler {
 	 * @param name_in Name of the calibration to look up.
 	 * @return Reference to calibration, or null if no registered cal matches the name.
 	 */
-	public Calibration getCalFromName(String name_in){
+	static public Calibration getCalFromName(String name_in){
 		for(Calibration cal :  registeredCals){
 			if(cal.name.equals(name_in)){
 				return cal;

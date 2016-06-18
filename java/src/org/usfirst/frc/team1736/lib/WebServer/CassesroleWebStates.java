@@ -6,27 +6,30 @@ import java.util.List;
 
 import org.json.simple.JSONObject;
 import org.usfirst.frc.team1736.lib.Calibration.CalWrangler;
-
+/**
+ * DESCRIPTION:
+ * <br>
+ * State View webpage definition class. Allows the user to send a variable set of state variables to the webpage.
+ * The intent is a slower update rate in exchange for displaying large amounts of data. Any and all internal variables
+ * in the software can be broadcast to the webpage.
+ * <br>
+ * ASSUMPTIONS:
+ * <br>
+ * Be sure the casserole webserver is started at some point, otherwise the webpage won't be displayed. Note that states can only be added (even at runtime), but never removed. At least not yet...  
+ * <br>
+ * USAGE:    
+ * <ol>   
+ * <li>Instantiate class</li> 
+ * <li>On init, call setCalWrangler with the calibration wrangler, if needed.</li> 
+ * <li>During runtime, call the put* methods to assign a new state value to be displayed.</li>    
+ * </ol>
+ * 
+ *
+ */
 public class CassesroleWebStates {
 	/** The set of objects which are broadcast. Must be volatile to ensure atomic accesses */
 	static volatile Hashtable<String, JSONObject> data_array_elements = new Hashtable<String, JSONObject>();
 	static volatile List<String> ordered_state_name_list = new ArrayList<String>(); //Used to help preserve the order the user creates the state displays in, since the hash table destroys this info
-	static CalWrangler wrangler_obj;
-	
-	/**
-	 * Sets the calibration wrangler which will be used for web operations
-	 */
-	public static void setCalWrangler(CalWrangler wrangler_in){
-		wrangler_obj = wrangler_in;
-	}
-	
-	/**
-	 * Get the present calWrangler being used for web operations
-	 * @return wrangler in use
-	 */
-	public static CalWrangler getCalWrangler(){
-		return wrangler_obj;
-	}
 	
 	/** 
 	 * Put a new state to the web interface, or update an existing one with the same name 
@@ -40,16 +43,26 @@ public class CassesroleWebStates {
 	/** 
 	 * Put a new state to the web interface, or update an existing one with the same name 
 	 * @param name Name for the state to display.
-	 * @param value Double Floating-point value to display
+	 * @param value Boolean value to display
 	 */
 	public static void putBoolean(String name, boolean value){
 		putGeneric(name, Boolean.toString(value));
 	}
 	
+	/** 
+	 * Put a new state to the web interface, or update an existing one with the same name 
+	 * @param name Name for the state to display.
+	 * @param value Integer value to display
+	 */
 	public static void putInteger(String name, int value){
 		putGeneric(name, Integer.toString(value));
 	}
 	
+	/** 
+	 * Put a new state to the web interface, or update an existing one with the same name 
+	 * @param name Name for the state to display.
+	 * @param value String value to display
+	 */
 	public static void putString(String name, String value){
 		putGeneric(name, value);	
 	}

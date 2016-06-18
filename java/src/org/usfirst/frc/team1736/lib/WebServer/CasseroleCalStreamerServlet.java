@@ -6,7 +6,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
 @SuppressWarnings("serial")
 @WebServlet(name = "Casserole Calibration Streamer Servlet", urlPatterns = { "/calstream" })
-public class CasseroleCalStreamerServlet extends WebSocketServlet {
+class CasseroleCalStreamerServlet extends WebSocketServlet {
 	 
     @Override
     public void configure(WebSocketServletFactory factory) {

@@ -7,6 +7,26 @@ import java.util.List;
 import org.json.simple.JSONObject;
 import org.usfirst.frc.team1736.lib.Calibration.CalWrangler;
 
+/**
+ * DESCRIPTION:
+ * <br>
+ * Driver View webpage definition class. Adds new things to the driver view webpage 
+ * (webcam mjpeg videos or dials). Has methods to update the dial displayed values.
+ * <br>
+ * ASSUMPTIONS:
+ * <br>
+ * Be sure the casserole webserver is started at some point, otherwise the webpage won't be displayed.  
+ * <br>
+ * USAGE:    
+ * <ol>   
+ * <li>Instantiate class</li> 
+ * <li>On init, call newDial and newWebcam once per object to be displayed on the driver view webpage.</li> 
+ * <li>During runtime, call setDialValue to update the dial value display</li>    
+ * </ol>
+ * 
+ *
+ */
+
 public class CasseroleDriverView {
 	/** The list of objects which are broadcast. Must be volatile to ensure atomic accesses */
 	static volatile Hashtable<String, JSONObject> driverView_objects = new Hashtable<String, JSONObject>();
@@ -17,6 +37,13 @@ public class CasseroleDriverView {
 	
 	static final String VAL_DISPLAY_FORMATTER = "%5.2f";
 	
+	/**
+	 * Create a new dial to display on the driver view webpage.  Should be called at init, as new dials cannot be added at runtime.
+	 * @param name_in Name of the value to display. Also used to reference the value when updating it.
+	 * @param min_in Minimum value displayed on the dial.
+	 * @param max_in Maximum value displayed on the dial.
+	 * @param step_in Step value between dial tick marks.
+	 */
 	public static void newDial(String name_in, double min_in, double max_in, double step_in){
 		//Sanitize user inputs
 		if(min_in >= max_in){
@@ -42,6 +69,11 @@ public class CasseroleDriverView {
 		return;
 	}
 	
+	/**
+	 * Add a new webcam to the driver view webpage. Should be called at init, as new webcams cannot be added at runtime.
+	 * @param url_in Web address of the motion JPEG stream from the camera.
+	 * @param name_in Name of the web stream. Internal uses only, currently...
+	 */
 	public static void newWebcam(String url_in, String name_in){
 		//Create new object
 		JSONObject new_obj = new JSONObject();
@@ -53,6 +85,11 @@ public class CasseroleDriverView {
 		return;
 	}
 	
+	/**
+	 * Display a new value on an existing dial at runtime
+	 * @param name_in Name of the dial to update
+	 * @param value_in Value to display on the dial. Should be in the min/max range assigned for the dial, or the displayed value will be truncated.
+	 */
 	//might be called from different threads, but all calls go to the web server thread.
 	public static synchronized void setDialValue(String name_in, double value_in){
 		int index = -1;

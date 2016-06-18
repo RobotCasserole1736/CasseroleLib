@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @SuppressWarnings("serial")
-public class CasseroleWebpageFromFileServlet extends HttpServlet {
+class CasseroleWebpageFromFileServlet extends HttpServlet {
 	
 	private final int FILE_CHUNK_CHARS = 100;
 	public String filename = null;
