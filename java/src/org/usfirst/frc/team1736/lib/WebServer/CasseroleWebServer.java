@@ -38,7 +38,7 @@ public class CasseroleWebServer {
 		final boolean LOCAL_PC_DEBUG_PATHS = false;
 		
 		//New server will be on the robot's address plus port 8080 (http://127.0.0.1:8080)
-		server = new Server(5800);
+		server = new Server(5805);
 		
 		
 		//Set up classes which will handle web requests
