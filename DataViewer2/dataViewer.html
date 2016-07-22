@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html>
+<title>Robot Data Log Viewer</title>
+
+<head>
+  <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+<h1>FRC 1736 Robot Casserole</h1>
+<div>
+<p>
+This is the data log viewing interface 
+</p>
+</div>
+<input type="file" id="files" onchange="handleFileSelect(this.files)" accept=".csv"/>
+<div id="container" style="width:100%; height:800px;"></div>
+
+
+</body>
+
+<script src="highcharts/jquery-1.11.0.min.js"></script>
+<script src="highcharts/highcharts.js"></script>
+<script src="highcharts/exporting.js"></script>
+
+
+<script type="text/javascript">
+
+
+
+function handleFileSelect(files_in) {
+
+    var filename = files_in[0];
+    var temp_series = [];
+    var units_to_yaxis_index = [];
+    var yaxis_index = 0;
+
+    var options =  {    
+    
+            credits: {
+                enabled: false
+            },
+            chart: {
+                zoomType: 'x',
+                renderTo: 'container',
+				animation: false,
+				ignoreHiddenSeries: true
+            },
+            title: {
+                text: 'Log Data'
+            },
+            subtitle: {
+                text: filename
+            },
+            xAxis: {
+                type: 'linear',
+                title: 'seconds (since boot)'
+            },
+            yAxis: [],
+            legend: {
+                enabled: true
+            },
+            plotOptions: {
+                line: {
+                    marker: {
+                        radius: 2
+                    },
+                    lineWidth: 1,
+                    threshold: null,
+					followPointer: false
+                }
+            },
+
+            series: []
+        }
+
+
+	var reader = new FileReader();
+	reader.readAsText(filename);
+    reader.onload = function(evt) {
+    
+		var all_lines = evt.target.result + '';
+        var lines = all_lines.split('\n');
+        var timestamp = 0;
+        var plotter_index = 0;
+        
+        // Iterate over the lines and add categories or series
+        $.each(lines, function(lineNo, line) {
+            var items = line.split(',');
+            
+            // first line containes signal names. Ignore Time column.
+            if (lineNo == 0) {
+                plotter_index = 0;
+                $.each(items, function(itemNo, item) {
+                    if(itemNo > 0) {
+                        if(item.length > 1){
+                            temp_series.push({name:item.replace(/ /g,''),
+                                              data:[],
+                                              visible:false,
+                                              visibility_counter:0,
+                                              yAxis:0 //temp, will be updated once the actual unit is read.
+                                             });
+                            plotter_index++;
+                        }
+                    }
+                });
+            }
+            
+            // second line containes units. Ignore Time column.
+            else if (lineNo == 1) {
+                plotter_index = 0;
+                $.each(items, function(itemNo, item) {
+                    if(itemNo > 0){
+                        if(item.length > 1){
+                            var unit = item.replace(/ /g,'');
+                            temp_series[plotter_index].name = temp_series[plotter_index].name + ' (' + unit + ')';
+                            if(!(unit in units_to_yaxis_index)){
+                                units_to_yaxis_index[unit] = yaxis_index;
+                                options.yAxis.push({title:{text:unit}, showEmpty:false});
+                                yaxis_index++;
+                            }
+                            temp_series[plotter_index].yAxis = units_to_yaxis_index[unit];
+                            plotter_index++;
+                        }
+                    } 
+                });
+            }
+            
+            // the rest of the lines contain data with their name in the first 
+            // position
+            else {
+                plotter_index = 0;
+                $.each(items, function(itemNo, item) {
+                    if (itemNo == 0) {
+                        timestamp = parseFloat(item);
+                    } else {
+                        if(item.length > 1){
+                            temp_series[plotter_index].data.push([timestamp, parseFloat(item)]);
+                            plotter_index++;
+                        }
+                    }
+                });
+                
+            }
+            
+            
+            
+        });
+        
+        $.each(temp_series, function(itemNo, element) {
+            options.series.push(element);
+        });
+        var chart = new Highcharts.Chart(options);
+	};
+};
+
+</script>
+
+</html>
+
