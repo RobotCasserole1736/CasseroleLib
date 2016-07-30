@@ -28,6 +28,47 @@ This is the data log viewing interface
 
 <script type="text/javascript">
 
+var global_chart;
+
+var options =  {    
+
+		credits: {
+			enabled: false
+		},
+		chart: {
+			zoomType: 'x',
+			renderTo: 'container',
+			animation: false,
+			ignoreHiddenSeries: true
+		},
+		title: {
+			text: 'Log Data'
+		},
+		subtitle: {
+			text: filename
+		},
+		xAxis: {
+			type: 'linear',
+			title: 'seconds (since boot)'
+		},
+		yAxis: [],
+		legend: {
+			enabled: true
+		},
+		plotOptions: {
+			line: {
+				marker: {
+					radius: 2
+				},
+				lineWidth: 1,
+				threshold: null,
+				followPointer: false
+			}
+		},
+
+		series: []
+	}
+
 
 
 function handleFileSelect(files_in) {
@@ -37,44 +78,6 @@ function handleFileSelect(files_in) {
     var units_to_yaxis_index = [];
     var yaxis_index = 0;
 
-    var options =  {    
-    
-            credits: {
-                enabled: false
-            },
-            chart: {
-                zoomType: 'x',
-                renderTo: 'container',
-				animation: false,
-				ignoreHiddenSeries: true
-            },
-            title: {
-                text: 'Log Data'
-            },
-            subtitle: {
-                text: filename
-            },
-            xAxis: {
-                type: 'linear',
-                title: 'seconds (since boot)'
-            },
-            yAxis: [],
-            legend: {
-                enabled: true
-            },
-            plotOptions: {
-                line: {
-                    marker: {
-                        radius: 2
-                    },
-                    lineWidth: 1,
-                    threshold: null,
-					followPointer: false
-                }
-            },
-
-            series: []
-        }
 
 
 	var reader = new FileReader();
@@ -153,6 +156,7 @@ function handleFileSelect(files_in) {
             options.series.push(element);
         });
         var chart = new Highcharts.Chart(options);
+		global_chart = chart;
 	};
 };
 
