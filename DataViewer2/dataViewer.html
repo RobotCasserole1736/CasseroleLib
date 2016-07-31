@@ -1,7 +1,25 @@
 <!DOCTYPE html>
 
 <html>
-<title>Robot Data Log Viewer</title>
+
+<style>
+#myProgress {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  background-color: #ddd;
+}
+
+#myBar {
+  position: absolute;
+  width: 1%;
+  height: 100%;
+  background-color: #FF0000;
+}
+</style>
+
+
+<title>Data Log Viewer</title>
 
 <head>
   <link rel="stylesheet" href="main.css">
@@ -9,20 +27,42 @@
 
 <body>
 
-<h1>FRC 1736 Robot Casserole</h1>
-<div>
-<p>
-This is the data log viewing interface 
-</p>
+<div class="container">
+	<header>
+		<h2>Data Log Viewer</h2>
+	</header>
+
+	<aside>
+		
+		<div>
+			Choose file: <input type="file" id="files" onchange="handleFileSelect(this.files)" accept=".csv" />  
+		</div>
+		
+		<div>
+			<input type="button" value="Clear All" onclick="hideAll()">
+			<input type="button" value="Voltage Estimation" onclick="setPreset(0)">
+			<input type="button" value="Launch Wheel" onclick="setPreset(1)">
+			<input type="button" value="Compressor" onclick="setPreset(2)">
+			<input type="button" value="Battery Estimator" onclick="setPreset(3)">
+		</div>
+	</aside>
+
+	<article>
+		<div id="container" style="width:100%; height:800px;"></div>
+	</article>
+
+
+	<footer>FRC 1736 Robot Casserole</footer>
+
 </div>
-<input type="file" id="files" onchange="handleFileSelect(this.files)" accept=".csv"/>
-<div id="container" style="width:100%; height:800px;"></div>
+
 
 
 </body>
 
 <script src="highcharts/jquery-1.11.0.min.js"></script>
 <script src="highcharts/highcharts.js"></script>
+<script src="highcharts/boost.js"></script>
 <script src="highcharts/exporting.js"></script>
 
 
@@ -30,7 +70,13 @@ This is the data log viewing interface
 
 var global_chart;
 
-var options =  {    
+//this set of presets is specific to 2015 - update as needed!
+var presets = [["MeasPDPVoltage (V)", "MeasBattDrawCurrent (A)", "EstVsys (V)"],
+               ["LaunchWheelCurrent (cmd)", "LaunchWheelActSpeed (RPM)", "LaunchWheelDesSpeed (RPM)"],
+			   ["PneumaticPress (PSI)", "CompressorCurrent (A)"],
+			   ["EstBatVoc (V)", "EstBattESR (Ohm)", "EstBatConfidence (bit)"]];
+
+var dflt_options =  {    
 
 		credits: {
 			enabled: false
@@ -42,10 +88,7 @@ var options =  {
 			ignoreHiddenSeries: true
 		},
 		title: {
-			text: 'Log Data'
-		},
-		subtitle: {
-			text: filename
+			text: ''
 		},
 		xAxis: {
 			type: 'linear',
@@ -65,30 +108,51 @@ var options =  {
 				followPointer: false
 			}
 		},
+		tooltip: {
+			crosshairs: true,
+			hideDelay: 0,
+			shared: true,
+			backgroundColor: null,
+			borderWidth: 0,
+			shadow: true,
+			animation: false,
+			useHTML: true,
+			style: {
+					padding: 0
+				}
+            },
 
 		series: []
 	}
 
 
-
 function handleFileSelect(files_in) {
 
-    var filename = files_in[0];
+    var fileobj = files_in[0];
     var temp_series = [];
     var units_to_yaxis_index = [];
     var yaxis_index = 0;
 
 
+	//Destroy any existing chart.
+	if(global_chart){
+		global_chart.destroy();
+	}
+	
+	//deep-copy the default chart options
+	var options = $.extend(true, {}, dflt_options)
+
 
 	var reader = new FileReader();
-	reader.readAsText(filename);
+	reader.readAsText(fileobj);
     reader.onload = function(evt) {
     
 		var all_lines = evt.target.result + '';
         var lines = all_lines.split('\n');
         var timestamp = 0;
         var plotter_index = 0;
-        
+		
+		
         // Iterate over the lines and add categories or series
         $.each(lines, function(lineNo, line) {
             var items = line.split(',');
@@ -152,13 +216,45 @@ function handleFileSelect(files_in) {
             
         });
         
+		//Add all data to the chart
         $.each(temp_series, function(itemNo, element) {
             options.series.push(element);
         });
-        var chart = new Highcharts.Chart(options);
-		global_chart = chart;
+		
+		//chart named after its sosurce file
+		options.title.text = fileobj.name;
+		
+		//Create dat chart
+		global_chart = new Highcharts.Chart(options);
+		
+
+		
 	};
 };
+
+function setPreset(preset_idx){
+	if(global_chart){	
+		hideAll();
+		for(itemNo = 0; itemNo < global_chart.series.length; itemNo++){
+			for(preset_iter_idx = 0; preset_iter_idx < presets[preset_idx].length; preset_iter_idx++){
+				if(global_chart.series[itemNo].name == presets[preset_idx][preset_iter_idx]){
+					global_chart.series[itemNo].setVisible(true,false);
+				}
+			}
+		}
+		global_chart.redraw();
+	}
+}
+
+
+function hideAll(){
+	if(global_chart){	
+		for(itemNo = 0; itemNo < global_chart.series.length; itemNo++){
+			global_chart.series[itemNo].setVisible(false,false);
+		}
+	}
+	global_chart.redraw();
+}
 
 </script>
 
