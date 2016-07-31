@@ -35,7 +35,7 @@
 	<aside>
 		
 		<div>
-			Choose file: <input type="file" id="files" onchange="handleFileSelect(this.files)" accept=".csv" />  
+			Choose file: <input type="file" id="files" onchange="handleFileSelect(this.files)" accept=".csv" />
 		</div>
 		
 		<div>
@@ -85,7 +85,10 @@ var dflt_options =  {
 			zoomType: 'x',
 			renderTo: 'container',
 			animation: false,
-			ignoreHiddenSeries: true
+			ignoreHiddenSeries: true,
+			panning: true,
+			panKey: 'shift',
+			showAxes: true
 		},
 		title: {
 			text: ''
@@ -94,10 +97,28 @@ var dflt_options =  {
 			type: 'linear',
 			title: 'seconds (since boot)'
 		},
+		
 		yAxis: [],
+		
 		legend: {
-			enabled: true
+			enabled: true,
+			itemMarginBottom: 2,
+			itemMarginTop: 2,
+			itemWidth: 300
+			
 		},
+		
+		exporting: {
+			enabled: false
+		},
+		
+		colors: ['#7cb5ec', '#43A348', '#90ed7d', '#f7a30c', '#8085e9', '#f15c80', '#e4d354', '#2b608f', '#a45b5b', '#91efe1',
+		         '#6cb5ec', '#43C348', '#90ed7d', '#f6a34c', '#8085e9', '#315c90', '#e4d354', '#2b908f', '#345bfb', '#61e8e1',
+				 '#5cb5ec', '#43F348', '#90ed7d', '#f7a38c', '#8085e9', '#f18c80', '#e4d354', '#2b208f', '#f45b5b', '#91e8e1',
+				 '#4cb5ec', '#43B348', '#90ed7d', '#f7a3Ac', '#8085e9', '#f12c80', '#e4d054', '#2bF08f', '#a45bfb', '#41e851',
+				 '#3cb5ec', '#430348', '#90ed7d', '#f7a3Fc', '#8099e9', '#f15c50', '#e4d354'
+                ],
+   
 		plotOptions: {
 			line: {
 				marker: {
@@ -105,7 +126,7 @@ var dflt_options =  {
 				},
 				lineWidth: 1,
 				threshold: null,
-				followPointer: false
+				animation: false,
 			}
 		},
 		tooltip: {
@@ -116,7 +137,7 @@ var dflt_options =  {
 			borderWidth: 0,
 			shadow: true,
 			animation: false,
-			useHTML: true,
+			useHTML: false,
 			style: {
 					padding: 0
 				}
