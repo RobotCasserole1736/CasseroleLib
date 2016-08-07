@@ -9,14 +9,20 @@
 
 <body>
 
-<h1>FRC 1736 Driver View</h1>
-<hr>
 <div/>
 <div id="id01">COM Status: Socket Not Open</div>
 <br>
 
 <div id="dials"></div>
 <br>
+
+<div id="booleans"></div>
+<br>
+
+<div id="stringboxes"></div>
+<br>
+
+
 
 
 <div id="webcams"></div>
@@ -43,14 +49,16 @@
 <script>
 var dataSocket = new WebSocket("ws://roboRIO-1736-FRC.local:5805/driverviewstream")
 var numTransmissions = 0;
-var dials = [];
+var display_objs = [];
 
 
 //Class for a dial
 
-var casseroleDial = function(elementID_in, min_in, max_in, step_in, name_in) {
+var casseroleDial = function(elementID_in, min_in, max_in, min_acceptable_in, max_acceptable_in, step_in, name_in) {
     this.min = min_in;
     this.max = max_in;
+    this.min_acceptable = min_acceptable_in;
+    this.max_acceptable = max_acceptable_in;
     this.step = step_in;
     this.name = name_in;
     this.value = min_in;
@@ -71,6 +79,10 @@ casseroleDial.prototype.init = function(){
     this.drawFullDial();
 }
 
+casseroleDial.prototype.convValToAngle = function(num_in){
+    return ((num_in-this.min)/(this.max-this.min)) * (1.5*Math.PI)  + 1.25*Math.PI;
+}
+
 casseroleDial.prototype.setValue = function(new_value){
     
     //draw-over background This resets to a blank dial.
@@ -80,6 +92,7 @@ casseroleDial.prototype.setValue = function(new_value){
     this.drawHand();
     this.drawValue();
     this.drawNumbers(); //Just in case the hand goes over the numbers
+    this.drawName();
 }
 
 casseroleDial.prototype.drawFullDial = function() {
@@ -96,19 +109,54 @@ casseroleDial.prototype.drawFullDial = function() {
 
 casseroleDial.prototype.drawFace = function() {
     var grad;
+    
+    min_acc_ang = this.convValToAngle(this.min_acceptable)-(0.5*Math.PI);
+    max_acc_ang = this.convValToAngle(this.max_acceptable)-(0.5*Math.PI);
+    
 
+    //min to min acceptable
     this.ctx.beginPath();
-    this.ctx.arc(0, 0, this.radius, 0.75*Math.PI, 2.25*Math.PI);
-    this.ctx.fillStyle = this.bgcolor;
-    this.ctx.fill();
-
-    grad = this.ctx.createRadialGradient(0,0,this.radius*0.95, 0,0,this.radius*1.05);
-    grad.addColorStop(0, this.handcolor);
-    grad.addColorStop(0.5, this.bgcolor);
-    grad.addColorStop(1, this.handcolor);
-    this.ctx.strokeStyle = grad;
+    this.ctx.moveTo(0,0);
+    this.ctx.arc(0, 0, this.radius, 0.75*Math.PI, min_acc_ang);
+    grad1 = this.ctx.createRadialGradient(0,0,this.radius*0.95, 0,0,this.radius*1.05);
+    grad1.addColorStop(0, this.handcolor);
+    grad1.addColorStop(0.5, "red");
+    grad1.addColorStop(1, this.handcolor);
+    this.ctx.strokeStyle = grad1;
     this.ctx.lineWidth = this.radius*0.1;
     this.ctx.stroke();
+    
+    //max acceptable to max 
+    this.ctx.beginPath();
+    this.ctx.moveTo(0,0);
+    this.ctx.arc(0, 0, this.radius, max_acc_ang, 2.25*Math.PI);
+    grad3 = this.ctx.createRadialGradient(0,0,this.radius*0.95, 0,0,this.radius*1.05);
+    grad3.addColorStop(0, this.handcolor);
+    grad3.addColorStop(0.5, "red");
+    grad3.addColorStop(1, this.handcolor);
+    this.ctx.strokeStyle = grad3;
+    this.ctx.lineWidth = this.radius*0.1;
+    this.ctx.stroke();
+    
+    //min acceptable to max acceptable
+    this.ctx.beginPath();
+    this.ctx.moveTo(0,0);
+    this.ctx.arc(0, 0, this.radius, min_acc_ang, max_acc_ang);
+    grad2 = this.ctx.createRadialGradient(0,0,this.radius*0.95, 0,0,this.radius*1.05);
+    grad2.addColorStop(0, this.handcolor);
+    grad2.addColorStop(0.5, "green");
+    grad2.addColorStop(1, this.handcolor);
+    this.ctx.strokeStyle = grad2;
+    this.ctx.lineWidth = this.radius*0.1;
+    this.ctx.stroke();
+
+    //White background
+    this.ctx.beginPath();
+    this.ctx.moveTo(0,0);
+    this.ctx.arc(0, 0, this.radius*0.94, 0.0*Math.PI, 2*Math.PI);
+    this.ctx.fillStyle = this.bgcolor;
+    this.ctx.fill();
+    
 }
 
 casseroleDial.prototype.drawNumbers = function() {
@@ -117,25 +165,30 @@ casseroleDial.prototype.drawNumbers = function() {
     this.ctx.font = "bold " + this.radius*0.15 + "px arial";
     this.ctx.textBaseline="middle";
     this.ctx.textAlign="center";
-    this.ctx.fillStyle=this.handcolor;
+    this.ctx.fillStyle="black";
+    this.ctx.beginPath();
+    this.ctx.moveTo(0,0);
     for(num= this.min; num <= this.max; num+=this.step){
-        ang = ((num-this.min)/(this.max-this.min)) * (1.5*Math.PI)  + 1.25*Math.PI;
+        ang = this.convValToAngle(num);
         this.ctx.rotate(ang);
-        this.ctx.translate(0, -this.radius*0.85);
+        this.ctx.translate(0, -this.radius*0.82);
         this.ctx.rotate(-ang);
         this.ctx.fillText(num.toString(), 0, 0);
         this.ctx.rotate(ang);
-        this.ctx.translate(0, this.radius*0.85);
+        this.ctx.translate(0, this.radius*0.82);
         this.ctx.rotate(-ang);
     }
 }
 
 casseroleDial.prototype.drawName = function() {
-    this.ctx.translate(0, this.radius*0.9);
+    this.ctx.rect(-this.radius*0.9, this.radius*0.7, this.radius*0.9*2, this.radius*0.3 );
+    this.ctx.fillStyle="#cccccc";
+    this.ctx.fill();
+    this.ctx.translate(0, this.radius*0.85);
     this.ctx.font=this.radius*0.18 + "px arial";
     this.ctx.fillStyle="#EE0000";
     this.ctx.fillText(this.name, 0, 0);
-    this.ctx.translate(0, -this.radius*0.9);
+    this.ctx.translate(0, -this.radius*0.85);
 
 } 
 
@@ -149,16 +202,16 @@ casseroleDial.prototype.drawValue = function() {
 } 
 
 casseroleDial.prototype.drawHand = function() {
-    var pos = (this.value-this.min)/(this.max-this.min)*(1.5*Math.PI) + 1.25*Math.PI;
+    var ang = this.convValToAngle(this.value);
     this.ctx.strokeStyle=this.handcolor;
     this.ctx.beginPath();
     this.ctx.lineWidth = this.radius*0.08;
     this.ctx.lineCap = "round";
     this.ctx.moveTo(0,0);
-    this.ctx.rotate(pos);
+    this.ctx.rotate(ang);
     this.ctx.lineTo(0, -this.radius*0.7);
     this.ctx.stroke();
-    this.ctx.rotate(-pos);
+    this.ctx.rotate(-ang);
     
     this.ctx.beginPath();
     this.ctx.arc(0, 0, this.radius*0.1, 0, 2*Math.PI);
@@ -167,6 +220,199 @@ casseroleDial.prototype.drawHand = function() {
 }
 
 //END Dial Class
+
+
+//START String Box Display class
+var casseroleStringBox = function(elementID_in, name_in) {
+
+    //initial input values
+    this.name = name_in;
+    this.value = "N/A"; //init to something meaningful
+    this.elementID = elementID_in;
+    
+    //Initialize data
+    this.init();
+    
+    //Do initial draw
+    this.drawName();
+    this.drawValBox();
+    this.drawVal();
+
+}
+
+casseroleStringBox.prototype.init = function(){
+    this.canvas = document.getElementById(this.elementID);
+    this.ctx = this.canvas.getContext("2d");
+    
+    //Appearance tune params
+    this.valueBoxX = this.canvas.width*0.025;  
+    this.valueBoxY = this.canvas.height*0.1;  
+    this.valueBoxWidth  = this.canvas.width  * 0.95;  
+    this.valueBoxHeight = this.canvas.height * 0.4;  
+    this.valueTextY = this.valueBoxY + (this.valueBoxHeight*0.85);
+	this.valueTextX = this.valueBoxX*2;
+    
+    this.nameBoxX = this.canvas.width*0.025;  
+    this.nameBoxY = this.canvas.height* 0.550;  
+    this.nameBoxWidth  = this.canvas.width  * 0.95;  
+    this.nameBoxHeight = this.canvas.height * 0.4;  
+    this.nameTextY = this.nameBoxY + (this.nameBoxHeight*0.85);
+	this.nameTextX = this.nameBoxX*2;
+        
+    this.textcolor = "#333";
+    this.bgcolor = "white";
+    
+}
+
+casseroleStringBox.prototype.drawName = function(){
+    this.ctx.fillStyle=this.bgcolor;
+    this.ctx.fillRect(this.nameBoxX, this.nameBoxY, this.nameBoxWidth, this.nameBoxHeight );
+    this.ctx.font="bold " + this.nameBoxHeight*0.50 + "px arial";
+    this.ctx.fillStyle=this.textcolor;
+    this.ctx.fillText(this.name.toString(), this.nameTextX, this.nameTextY);
+
+}
+
+casseroleStringBox.prototype.drawValBox = function(){
+    this.ctx.fillStyle=this.bgcolor;
+    this.ctx.fillRect(this.valueBoxX, this.valueBoxY, this.valueBoxWidth, this.valueBoxHeight );
+
+}
+
+casseroleStringBox.prototype.drawVal = function(){
+    this.ctx.font="bold " + this.valueBoxHeight*0.50 + "px arial";
+    this.ctx.fillStyle=this.textcolor;
+    this.ctx.fillText(this.value.toString(), this.valueTextX, this.valueTextY);
+}
+
+casseroleStringBox.prototype.setValue = function(new_value){
+    this.value = new_value;
+    this.drawValBox(); //draw over the existing value
+    this.drawVal(); //draw new value
+
+}
+//END String Display class
+
+//START Boolean Display class
+var casseroleBooleanDisplay= function(elementID_in, name_in, color_in) {
+
+    //initial input values
+    this.name = name_in;
+	this.color = color_in;
+    this.value = false;
+    this.elementID = elementID_in;
+    
+    //Initialize data
+    this.init();
+    
+    //Do initial draw
+    this.drawBgBox();
+    this.drawInd();
+
+}
+
+casseroleBooleanDisplay.prototype.init = function(){
+    this.canvas = document.getElementById(this.elementID);
+    this.ctx = this.canvas.getContext("2d");
+    
+    //Appearance tune params
+	this.borderSize = 0.05;
+	
+	this.bgBoxX = this.canvas.width*this.borderSize; 
+	this.bgBoxY = this.canvas.height*this.borderSize;  
+	this.bgBoxWidth = this.canvas.width*(1-2*this.borderSize); 
+	this.bgBoxHeight = this.canvas.height*(1-2*this.borderSize);  
+	
+	this.indBoxX = this.canvas.width*this.borderSize*2; 
+	this.indBoxY = this.canvas.height*this.borderSize*2;  
+	this.indBoxWidth = this.canvas.width*(1-4*this.borderSize); 
+	this.indBoxHeight = this.canvas.height*(1-4*this.borderSize);  
+	
+	this.textBoxX = this.canvas.width*this.borderSize*3; 
+	this.textBoxY = this.canvas.height*this.borderSize*3;  
+	this.textBoxWidth = this.canvas.width*(1-6*this.borderSize); 
+	this.textBoxHeight = this.canvas.height*(1-6*this.borderSize);  
+        
+		
+	if(this.color == "red"){
+		this.indBoxOffColor = "#770000";
+		this.indBoxOnColor = "#CC0000";
+		this.textOffColor = "#994444";
+		this.textOnColor = "#FF8888";
+	} else if(this.color == "yellow"){
+		this.indBoxOffColor = "#705500";
+		this.indBoxOnColor = "#EEAA00";
+		this.textOffColor = "#997700";
+		this.textOnColor = "#FFEE99";
+	}	else { //presume green
+		this.indBoxOffColor = "#004400";
+		this.indBoxOnColor = "#00BB00";
+		this.textOffColor = "#227722";
+		this.textOnColor = "#99FF99";
+	}
+		
+
+    this.bgcolor = "white";
+    
+}
+
+casseroleBooleanDisplay.prototype.drawBgBox = function(){
+    this.ctx.fillStyle=this.bgcolor;
+    this.ctx.fillRect(this.bgBoxX, this.bgBoxY, this.bgBoxWidth, this.bgBoxHeight );
+}
+
+casseroleBooleanDisplay.prototype.drawInd= function(){
+	if(this.value == true){
+		this.ctx.fillStyle=this.indBoxOnColor;
+	} else {
+		this.ctx.fillStyle=this.indBoxOffColor;
+	}
+	this.ctx.fillRect(this.indBoxX, this.indBoxY, this.indBoxWidth, this.indBoxHeight );
+	
+	if(this.value == true){
+		this.ctx.fillStyle=this.textOnColor;
+	} else {
+		this.ctx.fillStyle=this.textOffColor;
+	}
+    this.ctx.font="bold " + this.textBoxHeight*0.20 + "px arial";
+	this.drawWrapText(this.name, this.textBoxX, this.textBoxY + this.textBoxHeight/4, this.textBoxWidth, this.textBoxHeight/4);
+}
+
+
+casseroleBooleanDisplay.prototype.drawWrapText = function(text, x, y, maxWidth, lineHeight) {
+	var words = text.split(' ');
+	var line = '';
+
+	for(var n = 0; n < words.length; n++) {
+	  var testLine = line + words[n] + ' ';
+	  var metrics = this.ctx.measureText(testLine);
+	  var testWidth = metrics.width;
+	  if (testWidth > maxWidth && n > 0) {
+		this.ctx.fillText(line, x, y);
+		line = words[n] + ' ';
+		y += lineHeight;
+	  }
+	  else {
+		line = testLine;
+	  }
+	}
+	this.ctx.fillText(line, x, y);
+}
+
+casseroleBooleanDisplay.prototype.setValue = function(new_value){
+	if(new_value == "0"){
+		this.value = false;
+	} else if (new_value == "1"){
+		this.value = true;
+	}
+	//else, do nothing
+
+    this.drawInd(); //draw over the existing box
+}
+
+//END Boolean Display class
+
+
 
 //Data socket handlers
 dataSocket.onopen = function (event) {
@@ -179,41 +425,64 @@ dataSocket.onerror = function (error) {
 
 dataSocket.onmessage = function (event) {
   var arr = JSON.parse(event.data);
-  var dialcounter = 0;
+  var dataElementCounter = 0;
   
   if(arr.step == "initConfig"){
     //initial setup of the things on the page
     dialCanvasTexts = "";
+	stringboxCanvasTexts = "";
+	booleansCanvasTexts = "";
     webcamTexts = "";
     
-    //Round 1 - HTML Setup
-    dialcounter = 0
+    //Part 1 - HTML Setup
+    dataElementCounter = 0
     for(i = 0; i < arr.obj_array.length; i++){
         if(arr.obj_array[i].type == "dial"){
-            dialCanvasTexts += "<canvas id=\"dial"+ (dialcounter) +"\" width=\"200\" height=\"200\" style=\"background-color:#333\"></canvas>"
-            document.getElementById("dials").innerHTML = dialCanvasTexts;
-            dialcounter++;
+            dialCanvasTexts += "<canvas id=\"obj"+ (dataElementCounter) +"\" width=\"175\" height=\"175\" style=\"background-color:#333\"></canvas>"
+            dataElementCounter++;
+        } else if(arr.obj_array[i].type == "stringbox"){
+            stringboxCanvasTexts += "<canvas id=\"obj"+ (dataElementCounter) +"\" width=\"150\" height=\"75\" style=\"background-color:#333\"></canvas>"
+            dataElementCounter++;
+        } else if(arr.obj_array[i].type == "boolean"){
+            booleansCanvasTexts += "<canvas id=\"obj"+ (dataElementCounter) +"\" width=\"75\" height=\"75\" style=\"background-color:#333\"></canvas>"
+            dataElementCounter++;
         } else if(arr.obj_array[i].type == "webcam"){
-            webcamTexts += "<img src=\""+arr.obj_array[i].url+"\" style=\"width:300px;height:300px;\"/>"    
+			var tgt_x_pct = arr.obj_array[i].targ_x_pct;
+			var tgt_y_pct = arr.obj_array[i].targ_y_pct;
+			var rotation = arr.obj_array[i].rotation_deg;
+			//Draw webcam plus crosshairs overlaid
+            webcamTexts += "<div id=\"outter\" style=\"position:relative;width:300px;height:300px;\"><img src=\""+arr.obj_array[i].url+"\" style=\"width:300px;height:300px;transform:rotate("+rotation.toString()+"deg)\"/><div id=\"crosshair_vert\" style=\"background:yellow;position:absolute;top:"+tgt_y_pct.toString()+"%;left:"+tgt_x_pct.toString()+"%;width:2px;height:30px;transform:translate(-50%, -50%)\"/><div id=\"crosshair_horiz\" style=\"background:yellow;position:absolute;top:"+tgt_y_pct.toString()+"%;left:"+tgt_x_pct.toString()+"%;width:30px;height:2px;transform:translate(-50%, -50%)\"/></div>";    
         }
     }
+	
+	//Part 2 - update the HTML on the page
+    document.getElementById("webcams").innerHTML = webcamTexts;
+	document.getElementById("booleans").innerHTML = booleansCanvasTexts;
+	document.getElementById("stringboxes").innerHTML = stringboxCanvasTexts;
+	document.getElementById("dials").innerHTML = dialCanvasTexts;
     
-    //Round 2 - init the dials
-    dialcounter = 0
+    //Part 3 - init the data elements
+    dataElementCounter = 0
     for(i = 0; i < arr.obj_array.length; i++){
         if(arr.obj_array[i].type == "dial"){
-            dials.push(new casseroleDial("dial"+(dialcounter), arr.obj_array[i].min, arr.obj_array[i].max, arr.obj_array[i].step, arr.obj_array[i].name));
-            dialcounter++;
-        }
+            display_objs.push(new casseroleDial("obj"+(dataElementCounter), arr.obj_array[i].min, arr.obj_array[i].max, arr.obj_array[i].min_acceptable, arr.obj_array[i].max_acceptable, arr.obj_array[i].step, arr.obj_array[i].name));
+            dataElementCounter++;
+        } else if(arr.obj_array[i].type == "stringbox") {
+			display_objs.push(new casseroleStringBox("obj"+(dataElementCounter), arr.obj_array[i].name));
+            dataElementCounter++;
+        } else if(arr.obj_array[i].type == "boolean") {
+			display_objs.push(new casseroleBooleanDisplay("obj"+(dataElementCounter), arr.obj_array[i].name, arr.obj_array[i].color));
+            dataElementCounter++;
+		}
+		//ignore other types
     }
-    document.getElementById("webcams").innerHTML = webcamTexts;
+	
 
-    
   } else if(arr.step == "valUpdate"){
-    dialcounter = 0;
+    dataElementCounter = 0;
     for(i = 0; i < arr.obj_array.length; i++){
-        dials[dialcounter].setValue(arr.obj_array[i].value);
-        dialcounter++;
+        display_objs[dataElementCounter].setValue(arr.obj_array[i].value);
+        dataElementCounter++;
     }
   }
   //ignore other messages
