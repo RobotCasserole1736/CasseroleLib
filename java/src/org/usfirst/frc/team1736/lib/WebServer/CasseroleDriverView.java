@@ -39,10 +39,15 @@ public class CasseroleDriverView {
 	
 	/**
 	 * Create a new dial to display on the driver view webpage.  Should be called at init, as new dials cannot be added at runtime.
+	 * Dials are designed for two purposes: providing detailed value information at runtime, as well as at-a-glance indication of acceptable/unacceptable.
+	 * The numbers and units presented on the dial provide the first, while the red/green outline around the arc of travel shows the operator whether
+	 * the value is acceptable without reading any numbers. Use the min/max acceptable limit arguments to define this range.
 	 * @param name_in Name of the value to display. Also used to reference the value when updating it.
 	 * @param min_in Minimum value displayed on the dial.
 	 * @param max_in Maximum value displayed on the dial.
 	 * @param step_in Step value between dial tick marks.
+	 * @param min_acceptable_in Lower limit of green display area on drawn dial.
+	 * @param max_acceptable_in Upper limit of green display area on drawn dial.
 	 */
 	public static void newDial(String name_in, double min_in, double max_in, double step_in, double min_acceptable_in, double max_acceptable_in){
 		//Sanitize user inputs
@@ -99,6 +104,7 @@ public class CasseroleDriverView {
 	
 	/**
 	 * Create a new String to display on the driver view webpage.  Should be called at init, as new string values cannot be added at runtime.
+	 * Strings are hard to read and should be used sparingly. If at all possible, use a boolean or dial.
 	 * @param name_in Name of the value to display. Also used to reference the value when updating it.
 	 */
 	public static void newStringBox(String name_in){
@@ -116,7 +122,11 @@ public class CasseroleDriverView {
 	
 	/**
 	 * Create a new Boolean indicator to display on the driver view webpage.  Should be called at init, as new indicators values cannot be added at runtime.
+	 * Designing with these indicators should follow a "dark console" philosophy: or normal operations, all indicators should be dark. Red indicators should
+	 * illuminate for very bad abmormailites (pressure low, batt voltage low, etc). Yellow is for less severe conditions which degrade performance. Green
+	 * is for conditions which are not usually present, but are good. (ex: ball in intake).
 	 * @param name_in Name of the value to display. Also used to reference the value when updating it.
+	 * @param color_in Color to display. Currently, only supported values are "red", "yellow", and "green".
 	 */
 	public static void newBoolean(String name_in, String color_in){
 		//Create new object

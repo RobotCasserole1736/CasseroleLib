@@ -110,7 +110,7 @@ public class simpleCsvLogger {
 	/**
 	 * Write a list of doubles to the output file, assuming it's open. Creates a new line
 	 * in the .csv log file.
-	 * @param data_element Values to write (any number of doubles, each as its own argument). 
+	 * @param data_elements Values to write (any number of doubles, each as its own argument). 
      *                     Should have the same number of arguments here as signal names/units set during the call to init()
 	 * @return 0 on write success, -1 on failure.
 	 */	

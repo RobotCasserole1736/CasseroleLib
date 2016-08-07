@@ -44,7 +44,6 @@ public class Calibration {
 	 * Constructor for a new calibratable value.
 	 * @param name_in String for the name of the calibration. Best to make it the same of the variable name. 
 	 * @param default_val_in Default value for the calibration. Will keep this value unless the wrangler overwrites it.
-	 * @param wrangler_in Reference to the wrangler which will control this calibration. 
 	 */
 	public Calibration(String name_in, double default_val_in){
 		
