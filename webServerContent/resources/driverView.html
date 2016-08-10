@@ -9,23 +9,21 @@
 
 <body>
 
+
 <div/>
-<div id="id01">COM Status: Socket Not Open</div>
+<div align="center" id="id01">COM Status: Socket Not Open</div>
 <br>
 
-<div id="dials"></div>
+<div align="center" id="dials"></div>
 <br>
 
-<div id="booleans"></div>
+<div align="center" id="booleans"></div>
 <br>
 
-<div id="stringboxes"></div>
+<div align="center" id="stringboxes"></div>
 <br>
 
-
-
-
-<div id="webcams"></div>
+<div align="center"><table><tr id="webcams"></tr></table></div>
 <br>
 
 
@@ -335,24 +333,23 @@ casseroleBooleanDisplay.prototype.init = function(){
         
 		
 	if(this.color == "red"){
-		this.indBoxOffColor = "#770000";
+		this.indBoxOffColor = "#440000";
 		this.indBoxOnColor = "#CC0000";
-		this.textOffColor = "#994444";
-		this.textOnColor = "#FF8888";
+		this.textOffColor = "#774444";
+		this.textOnColor = "#FFAAAA";
 	} else if(this.color == "yellow"){
-		this.indBoxOffColor = "#705500";
-		this.indBoxOnColor = "#EEAA00";
-		this.textOffColor = "#997700";
+		this.indBoxOffColor = "#603300";
+		this.indBoxOnColor = "#DDAA00";
+		this.textOffColor = "#885500";
 		this.textOnColor = "#FFEE99";
 	}	else { //presume green
-		this.indBoxOffColor = "#004400";
-		this.indBoxOnColor = "#00BB00";
-		this.textOffColor = "#227722";
-		this.textOnColor = "#99FF99";
+		this.indBoxOffColor = "#003300";
+		this.indBoxOnColor = "#30CC30";
+		this.textOffColor = "#2A662A";
+		this.textOnColor = "#A9FFA9";
 	}
-		
 
-    this.bgcolor = "white";
+    this.bgcolor = "#BBBBBB";
     
 }
 
@@ -451,8 +448,8 @@ dataSocket.onmessage = function (event) {
 			var tgt_y_pct = arr.obj_array[i].targ_y_pct;
 			var rotation = arr.obj_array[i].rotation_deg;
 			//Draw webcam plus crosshairs overlaid
-            webcamTexts += "<div id=\"outter\" style=\"position:relative;width:300px;height:300px;\"><img src=\""+arr.obj_array[i].url+"\" style=\"width:300px;height:300px;transform:rotate("+rotation.toString()+"deg)\"/><div id=\"crosshair_vert\" style=\"background:yellow;position:absolute;top:"+tgt_y_pct.toString()+"%;left:"+tgt_x_pct.toString()+"%;width:2px;height:30px;transform:translate(-50%, -50%)\"/><div id=\"crosshair_horiz\" style=\"background:yellow;position:absolute;top:"+tgt_y_pct.toString()+"%;left:"+tgt_x_pct.toString()+"%;width:30px;height:2px;transform:translate(-50%, -50%)\"/></div>";    
-        }
+			webcamTexts += "<td><div id=\"outter\" style=\"position:relative;width:300px;height:300px;\"><img src=\""+arr.obj_array[i].url+"\" style=\"width:300px;height:300px;transform:rotate("+rotation.toString()+"deg)\"/><div id=\"crosshair_vert\" style=\"background:yellow;position:absolute;top:"+tgt_y_pct.toString()+"%;left:"+tgt_x_pct.toString()+"%;width:2px;height:30px;transform:translate(-50%, -50%)\"/><div id=\"crosshair_horiz\" style=\"background:yellow;position:absolute;top:"+tgt_y_pct.toString()+"%;left:"+tgt_x_pct.toString()+"%;width:30px;height:2px;transform:translate(-50%, -50%)\"/></div></td>";    
+		 }
     }
 	
 	//Part 2 - update the HTML on the page
