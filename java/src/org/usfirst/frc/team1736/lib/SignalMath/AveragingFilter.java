@@ -20,10 +20,10 @@ import java.util.Arrays;
  */
 public class AveragingFilter {
 	
-	int N; //length of filter 
-	double[] circ_buffer; //circular buffer to hold all values
-	double sum; //hold sum of all numbers in the buffer at all times.
-	int index; //"pointer" to the starting index in the buffer
+	private int N; //length of filter 
+	private double[] circ_buffer; //circular buffer to hold all values
+	private double sum; //hold sum of all numbers in the buffer at all times.
+	private int index; //"pointer" to the starting index in the buffer
 	
 	
 	/**
