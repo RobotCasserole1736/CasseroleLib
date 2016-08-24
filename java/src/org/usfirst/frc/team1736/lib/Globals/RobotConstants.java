@@ -4,7 +4,7 @@
 package org.usfirst.frc.team1736.lib.Globals;
 
 /**
- * Constant values pertaining to the robot at large
+ * Constant values pertaining to the robot at large. Probably have to be updated year-to-year
  *
  */
 public class RobotConstants {
