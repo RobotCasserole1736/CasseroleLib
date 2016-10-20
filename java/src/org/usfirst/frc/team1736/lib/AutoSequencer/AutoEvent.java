@@ -46,6 +46,8 @@ public abstract class AutoEvent {
 	
 	/** Assign a child event to this event. Whenever this event is active, the child event will be checked for a trigger condition 
 	 *   and will be updated in parallel with its parent event.
+	 *
+	 *   @param event_in The new event to add
 	 */
 	
 	public void addChildEvent(AutoEvent event_in){
