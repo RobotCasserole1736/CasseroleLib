@@ -1,4 +1,8 @@
 package org.usfirst.frc.team1736.lib.Util;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
 /**
  * DESCRIPTION: <br>
  * A simple way to define an arbitrary function of one input variable with linear interpolation
@@ -6,9 +10,6 @@ package org.usfirst.frc.team1736.lib.Util;
  * and then calls lookupVal with an arbitrary XVal. This class will return an appropriate Y value by
  * linearly interpolating in defined regions, or extending end-point Y values for extreme X values.
  */
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 public class MapLookup2D {
     SortedArrayList<Double> xAxis;

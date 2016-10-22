@@ -228,6 +228,7 @@ public abstract class CasserolePID {
 
 
     // The big kahuna. This is where the magic happens.
+	/** Periodic update for this PID. Automatically called, user shouldn't ever have to call it. */
     protected void periodicUpdate() {
         double curInput = returnPIDInput();
         double curOutput = 0.0;
