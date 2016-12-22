@@ -166,7 +166,7 @@ public class CsvLogger {
         }
         // Catch ALL the errors!!!
         catch (IOException e) {
-            System.out.println("Error initalizing log file: " + e.getMessage());
+            System.out.println("ERROR - cannot initalize log file: " + e.getMessage());
             return -1;
         }
         System.out.println("done!");
@@ -185,7 +185,7 @@ public class CsvLogger {
      */
     public static int logData(boolean forceSync) {
         if (!log_open) {
-            System.out.println("Error - Log is not yet opened, cannot write!");
+            //System.out.println("ERROR - Log is not yet opened, cannot write!");
             return -1;
         }
 
@@ -212,7 +212,7 @@ public class CsvLogger {
 
     /**
      * Add a field to be logged at each loop of the robot code. A method handle will be created and
-     * stored. This method is for methods which return a data type of double.
+     * stored. This method is for non-static methods which return a data type of double.
      * 
      * @param dataFieldName Name of the field/column in the output data. Also used for determining
      *        what to do for "complex" methods
@@ -224,37 +224,78 @@ public class CsvLogger {
      * @param args Optional list of arguments that are passed to the method, such as 0 in
      *        getRawButton(0)
      */
-    public static void addLoggingFieldDouble(String dataFieldName, String unitName, Class<?> classRef,
+    public static void addLoggingFieldDouble(String dataFieldName, String unitName,
             String methodName, Object reference, Object... args) {
         MethodType methodType = methodType(double.class);
         for (Object arg : args)
             methodType = methodType.appendParameterTypes(arg.getClass());
         methodType = methodType.unwrap(); // assumes primitive wrappers should be primitives
-        addLoggingField(methodType, dataFieldName, unitName, classRef, methodName, reference, args);
+        addLoggingField(methodType, dataFieldName, unitName, reference.getClass(), methodName, reference, args);
+    }
+    
+    /**
+     * Add a field to be logged at each loop of the robot code. A method handle will be created and
+     * stored. This method is for STATIC methods which return a data type of double.
+     * 
+     * @param dataFieldName Name of the field/column in the output data. Also used for determining
+     *        what to do for "complex" methods
+     * @param unitName Name of the units for field/column in the output data.
+     * @param methodName Actual method name to be called for this field, such as "getRawButton"
+     * @param classRef Static Class where the method is held, such as Joystick.class for getRawButton()
+     * @param args Optional list of arguments that are passed to the method, such as 0 in
+     *        getRawButton(0)
+     */
+    public static void addLoggingFieldDouble(String dataFieldName, String unitName,
+            String methodName, Class<?> classRef, Object... args) {
+        MethodType methodType = methodType(double.class);
+        for (Object arg : args)
+            methodType = methodType.appendParameterTypes(arg.getClass());
+        methodType = methodType.unwrap(); // assumes primitive wrappers should be primitives
+        addLoggingField(methodType, dataFieldName, unitName, classRef, methodName, null, args);
     }
 
 
     /**
      * Add a field to be logged at each loop of the robot code. A method handle will be created and
-     * stored. This method is for methods which return a data type of boolean.
+     * stored. This method is for non-static methods which return a data type of boolean.
      * 
      * @param dataFieldName Name of the field/column in the output data. Also used for determining
      *        what to do for "complex" methods
      * @param unitName Name of the units for field/column in the output data.
-     * @param classRef Class where the method is held, such as Joystick.class for getRawButton()
      * @param methodName Actual method name to be called for this field, such as "getRawButton"
      * @param reference A reference to the object whose method will be called. If static method,
      *        this should be null.
      * @param args Optional list of arguments that are passed to the method, such as 0 in
      *        getRawButton(0)
      */
-    public static void addLoggingFieldBoolean(String dataFieldName, String unitName, Class<?> classRef,
+    public static void addLoggingFieldBoolean(String dataFieldName, String unitName,
             String methodName, Object reference, Object... args) {
         MethodType methodType = methodType(boolean.class);
         for (Object arg : args)
             methodType = methodType.appendParameterTypes(arg.getClass());
         methodType = methodType.unwrap(); // assumes primitive wrappers should be primitives
-        addLoggingField(methodType, dataFieldName, unitName, classRef, methodName, reference, args);
+        addLoggingField(methodType, dataFieldName, unitName, reference.getClass(), methodName, reference, args);
+    }
+    
+    /**
+     * Add a field to be logged at each loop of the robot code. A method handle will be created and
+     * stored. This method is for STATIC methods which return a data type of boolean.
+     * 
+     * @param dataFieldName Name of the field/column in the output data. Also used for determining
+     *        what to do for "complex" methods
+     * @param unitName Name of the units for field/column in the output data.
+     * @param methodName Actual method name to be called for this field, such as "getRawButton"
+     * @param classRef Class where the method is held, such as Joystick.class for getRawButton()
+     * @param args Optional list of arguments that are passed to the method, such as 0 in
+     *        getRawButton(0)
+     */
+    public static void addLoggingFieldBoolean(String dataFieldName, String unitName, 
+            String methodName, Class<?> classRef, Object... args) {
+        MethodType methodType = methodType(boolean.class);
+        for (Object arg : args)
+            methodType = methodType.appendParameterTypes(arg.getClass());
+        methodType = methodType.unwrap(); // assumes primitive wrappers should be primitives
+        addLoggingField(methodType, dataFieldName, unitName, classRef, methodName, null, args);
     }
 
 

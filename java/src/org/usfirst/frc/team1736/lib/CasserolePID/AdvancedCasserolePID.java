@@ -1,9 +1,8 @@
 package org.usfirst.frc.team1736.lib.CasserolePID;
-import org.usfirst.frc.team1736.lib.Util.MapLookup2D;
 
 /**
  * DESCRIPTION: <br>
- * Fancy PID Controller algorithm designed by FRC1736 Robot Casserole. The WPIlib PID library is pretty
+ * PID Controller algorithm designed by FRC1736 Robot Casserole. The WPIlib PID library is pretty
  * darn good, but we had some things we wanted done differently. Therefore, we did it ourselves.
  * This is the Advanced flavor of our PID algorithms. We have no idea if it will actually be useful
  * for FRC purposes, but the concepts are not beyond what we believe an advanced FRC student could
@@ -16,20 +15,14 @@ import org.usfirst.frc.team1736.lib.Util.MapLookup2D;
  * There are number of new features added by the Advanced flavor. <br>
  * <br>
  * Gain Scheduling is a controls technique where the gains for a PID controller are modified at
- * runtime based on some variable. It's useful for when you have different operating conditions
- * under which you want your system to behave differently. If you notice that one set of gains
- * works well in some conditions, but a different set of gains works well in different conditions,
- * Gain Scheduling will allow you to change which set you use depending on your operating condition.
- * This class allows "operating condition" to be defined by this PID's setpoint, error, or some
- * external value that the user passes in at regular intervals. It used to be common to see this
- * sort of thing in aerospace, but it's pretty advanced for FRC. Then again, you might find it
- * useful... anyway.<br>
- *<br>
- * The other feature provided is a way to limit the max value of the integrators (pre-gain). This can 
- * force windup to not occur, but could cause some instability if not used carefully.
+ * runtime based on some variable.
  * 
  * 
  */
+
+
+import org.usfirst.frc.team1736.lib.Util.MapLookup2D;
+
 public abstract class AdvancedCasserolePID extends CasserolePID {
 
 
@@ -144,15 +137,9 @@ public abstract class AdvancedCasserolePID extends CasserolePID {
 
     /**
      * Set the gain scheduler variable value. Only useful if Gain Scheduling is being used, and it
-     * is set to the "External" type. This is useful when the gains to be used should depending
-	 * on something completely isolated from the PID-controlled system. For example, imagine
-	 * a system where a PID controlled gripper is at the end of an arm. If the arm position
-	 * is extended, gravity helps out so you need less gains. If the arm position is retracted,
-	 * you now have to work against gravity, so you want more agressive gains. The arm position
-	 * could be passed in here as the external scheduler variable, and two sets of gains for the
-	 * gripper could be set into the gain scheduler.
+     * is set to the "External" type.
      * 
-     * @param val_in present value of the external scheduler variable
+     * @param val_in
      */
     public void setGainSchedulerVal(double val_in) {
         if (GainSchedulerType == GainScheduleTypes.EXTERNAL) {
@@ -164,7 +151,6 @@ public abstract class AdvancedCasserolePID extends CasserolePID {
     @Override
     // The big kahuna. This is where the magic happens. This is based on
     // CassersolePID's update, but adds more.
-	/** Periodic update for this PID. Automatically called, user shouldn't ever have to call it. */
     protected void periodicUpdate() {
         double curInput = returnPIDInput();
         double curOutput = 0.0;
