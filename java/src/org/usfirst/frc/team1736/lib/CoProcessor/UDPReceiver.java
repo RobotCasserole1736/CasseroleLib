@@ -17,7 +17,8 @@ import java.net.DatagramSocket;
 
 /**
  * DESCRIPTION: <br>
- * Simple class to receive UDP data from a coprocessor (such as a Beaglebone Black) <br>
+ * Simple class to receive UDP data from a coprocessor (such as a Beaglebone Black) <br><br>
+ * The class is designed to be robust against spurious signals, connect/disconnect due to faulty wiring, etc. <br><br>
  * <br>
  * USAGE:
  * <ol>
@@ -34,6 +35,12 @@ public class UDPReceiver{
     byte[] receiveData = new byte[2048]; 
     DatagramPacket recievePacket = null;
 
+    /**
+     * Constructor for the UDP reciever. Sets up internal memory structures in prep to start listening for packets.
+     * 
+     * @param listen_to_addr String of the IP address of the coprocessor (For example, "10.17.36.20")
+     * @param listen_on_port integer port number to listen on. Often between 5800 and 5810 per FMS whitepaper. Must match whatever port the coprocessor is sending information to.
+     */
     public UDPReceiver(String listen_from_addr_in, int listen_on_port_in) {
         try {
             recieveSocket = new DatagramSocket(listen_on_port_in);
@@ -80,7 +87,7 @@ public class UDPReceiver{
     }
     
     /**
-     * Here, the main function is used as a test which can be run on a user's PC
+     * Here, the main function is used as a test which can be run on a user's PC. It should NOT be called by any robot code.
      */
     public static void main(String[] args) {
         System.out.println("Starting test for udp receiver...");
