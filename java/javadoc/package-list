@@ -2,6 +2,7 @@ org.usfirst.frc.team1736.lib.AutoSequencer
 org.usfirst.frc.team1736.lib.BatteryParam
 org.usfirst.frc.team1736.lib.Calibration
 org.usfirst.frc.team1736.lib.CasserolePID
+org.usfirst.frc.team1736.lib.CoProcessor
 org.usfirst.frc.team1736.lib.FalconPathPlanner
 org.usfirst.frc.team1736.lib.Globals
 org.usfirst.frc.team1736.lib.HAL
