@@ -143,7 +143,7 @@ Added Benifits
 A properly architected software system bestows many benifits on the maintainers
  of the codebase.
  Aside from being pleasing to look at and simple to understand, software
- changed can be made with great confidence.
+ changes can be made with great confidence.
  Good architecture reduces the number of unexpected side-effects any given
  change will have.
  This leads to simpler testing, and faster development.

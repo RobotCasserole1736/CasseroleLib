@@ -20,8 +20,8 @@ import sys, os, time
 
 TEAM_NUMBER_STR = '1736'
 RIO_ADDRESS = 'roboRIO-'+TEAM_NUMBER_STR+'-FRC.local'
-RIO_LOG_FPATH = '/media/sda1/data_captures_2016/'
-LOCAL_PATH = 'C:\\RoboRIO_data_captures\\'
+RIO_LOG_FPATH = '/media/sda1/data_captures/'
+LOCAL_PATH = '.\\downloaded_logs\\'
 LOG_LOGS_DIR = '.\\file_snagger\\logs\\'
 
 print('*************************************************************')
