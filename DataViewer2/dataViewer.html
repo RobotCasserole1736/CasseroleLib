@@ -35,9 +35,9 @@
 	<aside>
 		
 		<div>
-			Choose file: <input type="file" id="files" onchange="handleFileSelect(this.files)" accept=".csv" />
+			Choose file: <input type="file" id="files" value="../logFileSnagger/downloaded_logs" onchange="handleFileSelect(this.files)" accept=".csv" autofocus="autofocus" />
 		</div>
-		
+
 		<div>
 			<input type="button" value="Clear All" onclick="hideAll()">
 			<input type="button" value="Voltage Estimation" onclick="setPreset(0)">
@@ -71,10 +71,10 @@
 var global_chart;
 
 //this set of presets is specific to 2015 - update as needed!
-var presets = [["MeasPDPVoltage (V)", "MeasBattDrawCurrent (A)", "EstVsys (V)"],
+var presets = [["PDBMeasVoltage (V)", "PDBMeasCurrent (A)"],
                ["LaunchWheelCurrent (cmd)", "LaunchWheelActSpeed (RPM)", "LaunchWheelDesSpeed (RPM)"],
 			   ["PneumaticPress (PSI)", "CompressorCurrent (A)"],
-			   ["EstBatVoc (V)", "EstBattESR (Ohm)", "EstBatConfidence (bit)"]];
+			   ["BattEstVoc (V)", "BattEstESR (ohm)"]];
 
 var dflt_options =  {    
 
