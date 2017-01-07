@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="casserole-web-deploy">
+	<target name="web-content-deploy">
+		<sequential>
+			<echo>[casserole-web-deploy] Deploy web content files to roboRIO...</echo>
+	        <sshexec host="${target}"
+	                 username="lvuser"
+	                 password="${password}"
+	                 trust="true"
+	                 failonerror="false"
+	                 command="mkdir -p ${deploy.dir}/resources"/>
+			<scp todir="${username}@${target}:${deploy.dir}/resources" password="${password}" trust="true">
+				<fileset dir="${src.dir}/../resources">
+					<include name="*.html" />
+					<include name="*.css" />
+				</fileset>
+			</scp>
+			<echo>[casserole-web-deploy] Deploy web content files to roboRIO...</echo>
+		</sequential>
+	</target>
+
+</project>

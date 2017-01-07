@@ -1,7 +1,7 @@
 package org.usfirst.frc.team1736.lib.HAL;
 
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Joystick.RumbleType;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) FRC Team 1736 2016. See the License file.
@@ -58,7 +58,7 @@ public class Xbox360Controller {
     // -Controller D-Pad POV Hat
     final static int XBOX_DPAD_POV = 0;
 
-    private Joystick joystick;
+    private Joystick joystick; 
 
 
     /**
