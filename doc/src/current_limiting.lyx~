@@ -20,7 +20,7 @@
 \font_sf_scale 100
 \font_tt_scale 100
 \graphics default
-\default_output_format default
+\default_output_format pdf2
 \output_sync 0
 \bibtex_command default
 \index_command default
@@ -82,7 +82,7 @@ Chris Gerth - Jeremy Lee - FRC 1736 Robot Casserole
 \end_layout
 
 \begin_layout Date
-Dec 2015
+v0.0
 \end_layout
 
 \begin_layout Abstract
@@ -403,7 +403,7 @@ back-EMF
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
@@ -739,12 +739,12 @@ reference "fig: Battery_mdl"
 \begin_inset Float figure
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename battery.png
+	filename ../../../../Users/gerthcm/Downloads/res/battery.png
 	width 10cm
 
 \end_inset
@@ -1106,7 +1106,7 @@ All four possible values for
  should be computed at run-time.
  From the four possible values, it is known that gamma can be in the range
  
-\begin_inset Formula $\left[-1,1\right]$
+\begin_inset Formula $\left[0,1\right]$
 \end_inset
 
  since the scaling cannot exceed the physical limits of what was requested
@@ -1118,7 +1118,7 @@ All four possible values for
 
  case is where the driver-demanded voltage is honored).
  If no solution is within the 
-\begin_inset Formula $[-1,1]$
+\begin_inset Formula $[0,1]$
 \end_inset
 
  range, default to 
@@ -1126,7 +1126,9 @@ All four possible values for
 \end_inset
 
 .
- It is unknown if this case is needed.
+ This assumes current cannot be back-driven through an active controller,
+ and the braking effect of the zero-speed-commanded controller will push
+ the system back to steady-state without any external control effort.
 \end_layout
 
 \begin_layout Standard
@@ -1215,25 +1217,55 @@ The battery model has two degrees of freedom (Open-Circuit voltage and internal
  from the battery, and the present system voltage.
  As mentioned already, these signals are lower-bandwidth and would not be
  good for estimating transient values.
- However, outside of transients, their values can be filtered down to fairly
- accurate values for the voltage and current just at the battery's connection
- to the robot.
- To aid in transient rejection, it is suggested to take the 
-\series bold
-median
-\series default
- of the previous ~1 second of values as the present system voltage 
-\begin_inset Formula $V_{sys}[n]$
+ However, outside of extreme transients, their values can be filtered down
+ to fairly accurate values for the voltage and current just at the battery's
+ connection to the robot.
+ 
+\end_layout
+
+\begin_layout Standard
+The measured current and voltage values for the system form points on the
+ I-V plot for the battery.
+ It should be noted that the slope of this plot ends up being the equivilant
+ series resistance (
+\begin_inset Formula $R_{bat}$
 \end_inset
 
- and system current 
-\begin_inset Formula $I_{sys}[n]$
+), and the y-intercept is the open-circuit battery voltage (
+\begin_inset Formula $V_{oc}$
 \end_inset
 
- values.
- Averaging (instead of the median) is another option.
- The filtered system voltage and system current are the two inputs to the
- estimation algorithm.
+).
+ The basic method for determining these two desired parameters is to take
+ many system current and voltage measurements, and use them to create a
+ best-fit line.
+ The slope and y-intercept of this best-fit line are then used to calculate
+ the 
+\begin_inset Formula $V_{oc}$
+\end_inset
+
+and 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+parameters needed in the current-limiting algorithm.
+ To get an accurate best-fit line, it is required that the current and voltage
+ measurements be spread out over the I-V plane.
+ In other words, a steady-state robot sitting still will not produce meaningful
+ measurements - it is required to cycle the motors/compressors on and off
+ to generate a changing current draw from the battery.
+ 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ on particular is sensitive to steady-state error due to noise.
+ While the current is changing, the estimated 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+parameter can be trusted, but a sample-and-hold methodology must be used
+ when it is not changing much.
+ 
 \end_layout
 
 \begin_layout Section
@@ -1249,19 +1281,185 @@ reference "fig: Battery_mdl"
 \end_inset
 
  is referenced as the model for the battery, with the measured system voltage
- and measured system current present at its output ports.Since the battery
- parameters change slowly over time, it is assumed at all sample points
- that the following relations are simultaneously true:
+ and measured system current present at its output ports.
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\begin{cases}
-V_{oc}=I_{sys}[n]R_{bat}+V_{sys}[n]\\
-V_{oc}=I_{sys}[n-1]R_{bat}+V_{sys}[n-1]
-\end{cases}
-\end{equation}
+The estimation method can be summarized as follows:
+\end_layout
+
+\begin_layout Itemize
+Read in the present system voltage and current
+\end_layout
+
+\begin_layout Itemize
+Average some amount of previous data to help reject noise in the measurement.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Simulated experiments showed 300ms of data averaging was a good starting
+ point.
+ Make the length of the averaging tunable, and adjust to taste on the actual
+ robot.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+At 10ms, this equates to the past 30 samples
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+This will generate two filtered signals - one for the system current, one
+ for the system voltage
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Consider a window of the filtered data stretching from the present into
+ the past for a given length of time
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Simulated experiments showed 1000ms for a window length worked well
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Estimate the equivilant series resistance of the battery from this window
+ of samples
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+See section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Calculation-using-Least"
+
+\end_inset
+
+ for the algorithm
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Calculate the spread of current draw readings in the window under consideration
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Here, we define spread as the standard deviation of the points within the
+ window
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+If the spread is above a constant, tunable threshold, use the estimated
+ ESR in all other calculations, assuming it to be correct.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Additionally, if this is the biggest spread seen since the last time spread
+ went above the threshold, record the spread and ESR values for later use.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+If the Spread is below the threshsold, use the previous best-spread ESR.
+ (sample and hold most-confident value)
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Reset the 
+\begin_inset Quotes eld
+\end_inset
+
+largest spread
+\begin_inset Quotes erd
+\end_inset
+
+ threshold to zero as well in prep for the next time spread goes above the
+ threshold
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+The results of such an algortihm can be seen in the provided figures: Note
+ that when confidence goes to 
+\begin_inset Quotes eld
+\end_inset
+
+1
+\begin_inset Quotes erd
+\end_inset
+
+, the percent error goes to nearly zero and the estimated ESR 
+\begin_inset Quotes eld
+\end_inset
+
+catches up
+\begin_inset Quotes erd
+\end_inset
+
+ with the actual one.
+ When information is sparse in-between large current draw changes, the best
+ last known-good value for ESR is held.
+ This is a reasonable aproximation, as percent error stays mostly below
+ 10% for both ESR and Voc.
+ The figures illustrate the algorithm working in the presence of noise in
+ the readings for system voltage and current.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename res/Pulsed_motor_perf/Act-Est-Voc-ESR-for_given_load.png
+	width 15cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename res/Pulsed_motor_perf/Pct_Err_conf.png
+	width 15cm
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Performance of Algorithm on a pulsed-current-draw waveform with a discharging
+ battery 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: pulsed-motor-perf"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -1269,66 +1467,534 @@ V_{oc}=I_{sys}[n-1]R_{bat}+V_{sys}[n-1]
 \end_layout
 
 \begin_layout Standard
-Equating 
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename res/sin_load_perf/Act-Est-Voc-ESR-for_given_load.png
+	width 15cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename res/sin_load_perf/Pct_Err_conf.png
+	width 15cm
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Performance of Algorithm on a sine waveform current draw with a discharging
+ battery 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: sin-wav-I-draw"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Calculations
+\end_layout
+
+\begin_layout Subsubsection
+Averaging Filters
+\end_layout
+
+\begin_layout Standard
+The algorithm refers to utilizing an averaging filter to eliminate some
+ of the noise from the measured input 
+\begin_inset Formula $I_{sys}$
+\end_inset
+
+and 
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+readings.
+ An averaging filter has one input and one output - the output is always
+ equal to the average (or arithmetic mean) of the last 
+\begin_inset Formula $N$
+\end_inset
+
+ inputs, where 
+\begin_inset Formula $N$
+\end_inset
+
+ is said to be the 
+\begin_inset Quotes eld
+\end_inset
+
+length
+\begin_inset Quotes erd
+\end_inset
+
+ of the filter.
+ For example, on the system voltage,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+V_{sys}[n]=\frac{\stackrel[{\scriptstyle i=0}]{{\scriptstyle N-1}}{\sum}V_{meas}[n-i]}{N}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Where 
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+ends up being the filtered voltage value at time 
+\begin_inset Formula $n$
+\end_inset
+
+, and 
+\begin_inset Formula $V_{meas}$
+\end_inset
+
+is the voltage value read from the PDB sensor via a function call in software.
+ 
+\begin_inset Formula $N$
+\end_inset
+
+'s value can be determined by the length of averaging needed and the sample
+ time.
+ If it is desired to average 2 seconds of data, and the sample time is 10
+ ms, you will need 200 points (
+\begin_inset Formula $N=2/Ts=200$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Use averaging filters on both the read-in system current and voltage.
+ It may also be used on the ESR calculated.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+Calculation using Least Mean Squares on a Set of Points
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Calculation-using-Least"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+From http://faculty.cs.niu.edu/~hutchins/csci230/best-fit.htm.
+\end_layout
+
+\begin_layout Standard
+The algorithm used to calculate 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+from a window of current and voltage measurement points is based on the
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Least-Mean-Squares
+\begin_inset Quotes erd
+\end_inset
+
+ algorithm.
+ LMS seeks to define a line with a slope such that the distance from the
+ line to any point in the set is as small as possible.
+ That is to say, the line is the closest to the average of all the points
+ as much as po ssible.
+ The algorithm is derived by first defining this 
+\begin_inset Quotes eld
+\end_inset
+
+best fit
+\begin_inset Quotes erd
+\end_inset
+
+ condition mathematically, and then working backward to the line equation.
+ That proof is not covered in this paper.
+ Instead, the final algorithm is presented.
+\end_layout
+
+\begin_layout Standard
+Define first 
+\begin_inset Formula $N_{lms}$
+\end_inset
+
+to be the number of points in the window of I-V readings to consider.
+ This is referred to as the 
+\begin_inset Quotes eld
+\end_inset
+
+window size
+\begin_inset Quotes erd
+\end_inset
+
+, and is numerically the same as the number of current-voltage pairs plotted
+ on the I-V graph from which we will attempt to apply a best-fit line.
+\end_layout
+
+\begin_layout Standard
+Define a few more variables:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+S_{v}[n]=\stackrel[{\scriptstyle i=0}]{{\scriptstyle N_{lms}-1}}{\sum}V_{sys}[n-i]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+S_{I}[n]=\stackrel[{\scriptstyle i=0}]{{\scriptstyle N_{lms}-1}}{\sum}I_{sys}[n-i]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+S_{IV}[n]=\stackrel[{\scriptstyle i=0}]{{\scriptstyle N_{lms}-1}}{\sum}\left(I_{sys}[n-i]*V_{sys}[n-i]\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+S_{I^{2}}[n]=\stackrel[{\scriptstyle i=0}]{{\scriptstyle N_{lms}-1}}{\sum}\left(I_{sys}[n-i]^{2}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\bar{V}[n]=\frac{S_{V}}{N_{lms}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\bar{I}[n]=\frac{S_{I}}{N_{lms}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then, using these variables, the ESR estimate for timestep 
+\begin_inset Formula $n$
+\end_inset
+
+ may be calculated:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+R_{bat}[n]=-\frac{S_{IV}[n]-\left(S_{I}[n]*\bar{V}[n]\right)}{S_{I^{2}}[n]-\left(S_{I}[n]*\bar{I}[n]\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Confidence Calculation and Filtering
+\end_layout
+
+\begin_layout Standard
+As stated, the confidence we have in the estimated 
+\begin_inset Formula $R_{bat}[n]$
+\end_inset
+
+ is based off of the standard deviation of the set of current measurements
+ within the window being considered.
+ For reference, this standard deviation (or 
+\begin_inset Quotes eld
+\end_inset
+
+spread
+\begin_inset Quotes erd
+\end_inset
+
+) is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{conf}[n]=\sqrt{\frac{1}{N_{lms}}\stackrel[{\scriptstyle i=0}]{{\scriptstyle N_{lms}-1}}{\sum}\left(\left(I_{sys}[n-i]-\bar{I}[n]\right)^{2}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A tunable constant 
+\begin_inset Formula $\sigma_{min}$
+\end_inset
+
+determines the minimum spread needed before the 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+estimation is trusted.
+ If 
+\begin_inset Formula $\sigma_{conf}[n]$
+\end_inset
+
+ is larger than the minimum, use 
+\begin_inset Formula $R_{bat}[n]$
+\end_inset
+
+.
+ Otherwise, re-assign 
+\begin_inset Formula $R_{bat}[n]$
+\end_inset
+
+ to the value during the highest-
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\sigma_{conf}[n]$
+\end_inset
+
+ loop during the most recent period of trustable-
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+numbers.
+ A snippet of .m code is proveded illustrating this logic:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "language=Matlab,breaklines=true"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+% If the spread is above a tuned minimum threshold, we may use this window
+     
+\end_layout
+
+\begin_layout Plain Layout
+
+% for the ESR calculation.
+     
+\end_layout
+
+\begin_layout Plain Layout
+
+if(spread > min_spread_thresh_A)         
+\end_layout
+
+\begin_layout Plain Layout
+
+	confidence(i) = 1;      
+\end_layout
+
+\begin_layout Plain Layout
+
+	% Additionally, if this is the larges spreaad we've seen so far,      
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+	% save the ESR value for when the spread is no longer 
+\end_layout
+
+\begin_layout Plain Layout
+
+	% big enough to trust the calculation.
+         
+\end_layout
+
+\begin_layout Plain Layout
+
+	if(spread > prev_best_spread)             
+\end_layout
+
+\begin_layout Plain Layout
+
+		prev_best_spread = spread;             
+\end_layout
+
+\begin_layout Plain Layout
+
+		prev_best_esr = ESR_est_raw(i);         
+\end_layout
+
+\begin_layout Plain Layout
+
+	end     
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+else         
+\end_layout
+
+\begin_layout Plain Layout
+
+	%When the spread isn't big enough, we don't trust our calculation     
+    
+\end_layout
+
+\begin_layout Plain Layout
+
+	% We also reset the "best spread" to zero since we are no longer in a 
+        
+\end_layout
+
+\begin_layout Plain Layout
+
+	% "confidence = 1" region.
+         
+\end_layout
+
+\begin_layout Plain Layout
+
+	confidence(i) = 0;
+\end_layout
+
+\begin_layout Plain Layout
+
+	prev_best_spread = 0;     
+\end_layout
+
+\begin_layout Plain Layout
+
+end                  
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+%If we didnt' trust this window's calculation, use the previous best calculation
+     
+\end_layout
+
+\begin_layout Plain Layout
+
+if(confidence(i) == 0)       
+\end_layout
+
+\begin_layout Plain Layout
+
+	ESR_est_raw(i) = prev_best_esr;     
+\end_layout
+
+\begin_layout Plain Layout
+
+end  
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
 \begin_inset Formula $V_{oc}$
 \end_inset
 
- we find the following relationship:
+ Calculation
+\end_layout
+
+\begin_layout Standard
+Regardless of whether the 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ calculation was trusted or not, the open-circuit voltage can always be
+ calculated via this formaula:
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-I_{sys}[n]R_{bat}+V_{sys}[n]=I_{sys}[n-1]R_{bat}+V_{sys}[n-1]
+V_{oc}[n]=\bar{V}[n]+R_{bat}[n]*\bar{I}[n]
 \]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-I_{sys}[n]R_{bat}-I_{sys}[n-1]R_{bat}=V_{sys}[n-1]-V_{sys}[n]
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-R_{bat}=\frac{V_{sys}[n-1]-V_{sys}[n]}{I_{sys}[n]-I_{sys}[n-1]}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Back-substituting, we also find
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-V_{oc}=I_{sys}[n]R_{bat}+V_{sys}[n]
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-V_{oc}=I_{sys}[n]\frac{V_{sys}[n-1]-V_{sys}[n]}{I_{sys}[n]-I_{sys}[n-1]}+V_{sys}[n]
-\end{equation}
 
 \end_inset
 
