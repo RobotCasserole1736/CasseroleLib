@@ -82,26 +82,16 @@ Chris Gerth - Jeremy Lee - FRC 1736 Robot Casserole
 \end_layout
 
 \begin_layout Date
-v0.0
+v0.1
 \end_layout
 
 \begin_layout Abstract
 A method for limiting motor voltage commands is presented.
  The target controlled variable is system voltage - too much current draw
- from the motors will lower system voltage to the point where the controller
- enters a 
-\begin_inset Quotes eld
-\end_inset
-
-brownout
-\begin_inset Quotes erd
-\end_inset
-
- state.
- This is undesirable during a FRC robotics match.
- The method is an adaptive observer plant model which estimates battery
- parameters in real time, and limits current draw from motors to prevent
- system voltage drop.
+ from the motors will lower system voltage to an unacceptable level.
+ This limiting is achieved through calculations involving an adaptive observer
+ plant model which estimates battery parameters in real time, and projections
+ of current draw from motors.
  
 \end_layout
 
@@ -139,61 +129,80 @@ name "part:Problem-Statement,-Constraints,"
 
 \end_layout
 
+\begin_layout Section
+Background
+\end_layout
+
 \begin_layout Standard
 During FRC robotics competitions, there are many constraints on the set
  of electrical components which may be used.
- This includes motors, controllers, and batteries.
  The construction of an ever-more powerful drive-train is inherently limited
  by these component constraints, as arbitrarily more-powerful motors and
  energy sources cannot be used.
- The usual standard for drive-train combinations involves the FR801-001
- 2.5
+ A common combination of components involves the FR801-001 2.5
 \begin_inset Quotes erd
 \end_inset
 
  CIM motor and the MK ES17-12 battery.
- There are a maximum of six CIM motors used to power all wheels.
+ There are a maximum of six CIM motors used to power all mechanisms.
  The motors are fed by electronic PWM controllers, where voltage is the
  commanded parameter.
  CIM motors can pull upwards of 120A at stall.
  Six stalled CIM motors is more than enough to cause controller brownout
- due to current-draw-induced voltage drop (verily, six stalled CIM motors
- can cause the MK battery to combust! This is why circuit breakers exist!).
+ due to current-draw-induced voltage drop.
  Even at non-stall conditions, allowing the motors to draw excessive current
  can quickly pull down system voltage.
  Traditionally, this is limited by using fewer CIM motors for the drive-train,
- or using less grippy wheels (allowing for slip to occur sooner), or increasing
- the gear ratio to slow the whole system down.
- All of these mitigations reduce drive-train performance, and are therefore
- considered to be an engineering trade-off.
- 
+ or using less grippy wheels to minimize stall, or increasing the gear ratio
+ to slow the whole system down.
+ All of these mitigations can reduce drive-train performance.
 \end_layout
 
 \begin_layout Standard
-The low-bar solution for limiting system voltage drop is to monitor either
- the system voltage or battery current draw, and reducing all motor commands
- as a preset limit is neared.
- This may work in some cases.
- However, most brownouts occur due to transient conditions (IE, current
- spikes) from collisions or sudden changes in driver commands.
- Since the measurements of system voltage and current are analog, they are
- inherently limited both by the system sample time, and by analog noise.
- Getting accurate signals will involve filtering, but any filtering induces
- delay in signal response time to rapidly changing conditions.
- A higher-bandwidth data source is needed.
+Multiple software solutions to reduce the effects of system voltage drop
+ do exist.
+ The most common perhaps is to simply limit the maximum rate-of-change of
+ a motor command, effectively low-pass filtering the signal.
+ Fewer extreme changes in applied motor voltage tends to reduce current
+ draw.
+ Another low-bar software solution for limiting system voltage drop is to
+ monitor either the system voltage or battery current draw, and reducing
+ all motor commands as a preset limit is neared.
+ Either of these may work in many cases.
+ We seek to provide an improved algorithm which would work in more cases.
+ Additionally, the physics-based nature of the algorithm should push toward
+ optimum performance of the drivetrain (where the definition of 
+\begin_inset Quotes eld
+\end_inset
+
+optimum
+\begin_inset Quotes erd
+\end_inset
+
+ includes a constraint on the lowest allowable system voltage).
+\end_layout
+
+\begin_layout Section
+Overview
+\end_layout
+
+\begin_layout Standard
+Most brownouts occur due to transient conditions (IE, current spikes) from
+ collisions or sudden changes in driver commands.
+ Since measurements of system voltage and current are inherently limited
+ by sample time, noise, and datalink delay, a higher-bandwidth data source
+ is useful.
  For this algorithm, the speed of the motors was chosen, since encoders
- have much more accurate signals exactly at the sample rate of the software
- (nearly zero noise).
+ generally have more accurate signals.
  This leads to the need for an observer plant model to estimate motor current
  draw based on speed, voltage, and other physical parameters of the robot.
- Finally, the traditional model of ideal DC motors yields a total current
- draw, but does not directly predict system voltage drop due to this current
- draw.
+ This traditional model of ideal DC motors yields a total current draw,
+ but does not directly predict system voltage drop due to this current draw.
  Predicting system voltage drop requires knowing an accurate model of the
  battery.
  Since each battery is slightly different and over a match the battery's
- parameters will change, an adaptive algorithm is needed to estimate the
- battery's parameters.
+ parameters will change, an adaptive algorithm is used to estimate the battery's
+ performance parameters.
  Since these parameters change relatively slowly over time, lower-bandwidth
  signals may be used as inputs to derive them.
 \end_layout
@@ -232,8 +241,19 @@ For the purposes of this paper, a six-CIM tank drive platform is assumed.
  from motor to wheel, which apply force on the left and right sides of a
  rigid frame.
  Rotation is accomplished by driving the wheels at different speeds.
- However, the algorithms described herein are easily adapted to other drive
+ However, the algorithms described herein can be adapted to other drive
  platforms.
+\end_layout
+
+\begin_layout Section
+Technical Prerequisites
+\end_layout
+
+\begin_layout Standard
+Understanding the algorithms described in this paper should require some
+ basic knowledge of circuit analysis (Kirchoff's & Ohm's laws), and algebra.
+ An introductory E&M Physics course should suffice.
+ 
 \end_layout
 
 \begin_layout Part
@@ -242,9 +262,9 @@ Current Limiting Algorithm
 
 \begin_layout Standard
 The Current Limiting Algorithm is responsible for establishing a maximum
- motor voltage command to each set of wheels.
- The limiting involved is driven by the need to prevent system voltage from
- dropping below the preset 
+ motor voltage command to each set of mechanically-linked motors.
+ The amount of limiting is calculated to be as small as possible, while
+ still preventing system voltage from dropping below the preset 
 \begin_inset Formula $V_{sys,min}$
 \end_inset
 
@@ -256,15 +276,8 @@ Data Sources
 \end_layout
 
 \begin_layout Standard
-As indicated in Part 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "part:Problem-Statement,-Constraints,"
-
-\end_inset
-
-, the only external input needed for current estimation is the motor's present
- rotational speed.
+The key time-varying external input needed for current estimation is the
+ motor's present rotational speed.
  This may be derived from an encoder attached somewhere on each side of
  the drive-train.
  The motor's signed rotational speed at time-step 
@@ -355,8 +368,8 @@ reference "part:Battery-Parameter-Estimation"
  Finally, it could also be derived from the previous loop estimation from
  this current limiting algorithm.
  The first solution does not account for decaying battery voltage over the
- match, but the final one may induce oscillation due to an extra degree
- of linkage (higher order) in the differential equations.
+ match, and the final one involves math implications beyond the scope of
+ this paper.
  Therefore, for this analysis, the filtered measurement of present system
  voltage will be used.
 \end_layout
@@ -377,9 +390,9 @@ Motor Model
 \end_layout
 
 \begin_layout Standard
-The classical model for a DC motor involves a two-terminal device circuit,
- where the two terminals are linked by a resistance and a variable voltages
- source in series.
+The classic electrical model for a DC motor involves a two-terminal device
+ circuit, where the two terminals are linked by a resistance and a variable
+ voltages source in series.
  The resistance represents the electrical resistance of the motor winding
  and communicator.
  All inductive effects of the wrapped wire are ignored.
@@ -438,9 +451,15 @@ name "fig: DC-motor-model"
 \end_layout
 
 \begin_layout Standard
-Assuming V is the driving voltage from the motor controller and L is zero,
- we can apply Kirchhoff's Voltage Law and Ohm's Law around the circuit to
- arrive at the following relationship:
+From Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: DC-motor-model"
+
+\end_inset
+
+, presuming L to be zero, we can apply Kirchhoff's Voltage Law and Ohm's
+ Law around the circuit to arrive at the following relationship:
 \end_layout
 
 \begin_layout Standard
@@ -525,7 +544,7 @@ Determining Motor Constants
 \end_layout
 
 \begin_layout Standard
-For the CIM motor, we know two crucial facts: Stall Current is 133A, and
+For the CIM motor, we know a few crucial facts: Stall Current is 133A, and
  Free-wheel speed is 5310 RPM while drawing 2.7A
 \begin_inset Foot
 status open
@@ -719,12 +738,10 @@ Before continuing determining if limiting is actually needed, we must establish
  with a resistor.
  As more current is drawn from the battery, the voltage drop across the
  resistance causes the output voltage of the battery to drop.
- As the battery discharges, the ideal voltage source decreases from a nominal
- (fully-charged) value of near ~13V to something much lower (~8V or even
- lower).
- As the battery ages over time, the internal resistance will also increase,
- making the battery more susceptible to voltage drops from a large current
- draw.
+ As the battery discharges, the series resistance tends to increase, while
+ the open-circuit voltage decreases slightly.
+ This makes a dead battery's output voltage sag much lower when put under
+ a given constant load.
  See figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -854,7 +871,7 @@ See http://www.mkbattery.com/images/ES17-12.pdf
 \end_inset
 
  However, later in the analysis, it will be shown how to calculate them
- deceptively over time.
+ over time.
 \end_layout
 
 \begin_layout Section
@@ -867,7 +884,7 @@ Limiting system voltage drop involves a multi-step process.
 \end_layout
 
 \begin_layout Enumerate
-Estimate current battery parameters
+Estimate (or assume) current battery parameters
 \end_layout
 
 \begin_layout Enumerate
@@ -875,7 +892,7 @@ Measure motor speeds from each side of the drive-train
 \end_layout
 
 \begin_layout Enumerate
-Determine the driver demanded voltages (
+Determine the driver requested voltages (
 \begin_inset Formula $V_{ddr},V_{ddl})$
 \end_inset
 
@@ -980,11 +997,22 @@ and
 .
  Note the introduction of absolute-value signs to account for the fact that
  the current direction is inverted at the motor controller, so the battery
- always sees current drawn out of it (even when going in reverse).
+ always sees current drawn out of it (even when going in reverse)
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Note this is a presumption of a behavior of specific speed controllers.
+ Depending on the speed controller used, your mileage may vary.
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
-If scaling is needed (IE, 
+If scaling is needed (when 
 \begin_inset Formula $V_{sys,est}<V_{sys,min})$
 \end_inset
 
@@ -1069,7 +1097,7 @@ Due to the double absolute value symbols, we now have four possible solutions
 \end_inset
 
 .
- Doing some funky algebra 
+ Doing some nifty algebra 
 \begin_inset Foot
 status open
 
@@ -1103,7 +1131,7 @@ All four possible values for
 \begin_inset Formula $\gamma$
 \end_inset
 
- should be computed at run-time.
+ would be computed at run-time.
  From the four possible values, it is known that gamma can be in the range
  
 \begin_inset Formula $\left[0,1\right]$
@@ -1127,8 +1155,8 @@ All four possible values for
 
 .
  This assumes current cannot be back-driven through an active controller,
- and the braking effect of the zero-speed-commanded controller will push
- the system back to steady-state without any external control effort.
+ and friction in the system will push the system back to steady-state with
+ zero control effort.
 \end_layout
 
 \begin_layout Standard
@@ -1215,8 +1243,8 @@ The battery model has two degrees of freedom (Open-Circuit voltage and internal
  for FRC.
  Using the API's associated with it, it is possible to read the total current
  from the battery, and the present system voltage.
- As mentioned already, these signals are lower-bandwidth and would not be
- good for estimating transient values.
+ As mentioned already, these signals are lower-bandwidth and are not the
+ best for measuring sharp transient conditions.
  However, outside of extreme transients, their values can be filtered down
  to fairly accurate values for the voltage and current just at the battery's
  connection to the robot.
@@ -1226,7 +1254,7 @@ The battery model has two degrees of freedom (Open-Circuit voltage and internal
 \begin_layout Standard
 The measured current and voltage values for the system form points on the
  I-V plot for the battery.
- It should be noted that the slope of this plot ends up being the equivilant
+ It should be noted that the slope of this plot represents the equivilant
  series resistance (
 \begin_inset Formula $R_{bat}$
 \end_inset
@@ -1236,6 +1264,14 @@ The measured current and voltage values for the system form points on the
 \end_inset
 
 ).
+ See figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: batt_est_idea"
+
+\end_inset
+
+.
  The basic method for determining these two desired parameters is to take
  many system current and voltage measurements, and use them to create a
  best-fit line.
@@ -1252,13 +1288,20 @@ parameters needed in the current-limiting algorithm.
  To get an accurate best-fit line, it is required that the current and voltage
  measurements be spread out over the I-V plane.
  In other words, a steady-state robot sitting still will not produce meaningful
- measurements - it is required to cycle the motors/compressors on and off
- to generate a changing current draw from the battery.
+ measurements.
+ A changing current draw from the battery is required.
+ See figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: batEst_bad_spread"
+
+\end_inset
+
  
 \begin_inset Formula $R_{bat}$
 \end_inset
 
- on particular is sensitive to steady-state error due to noise.
+ in particular is sensitive to steady-state error due to noise.
  While the current is changing, the estimated 
 \begin_inset Formula $R_{bat}$
 \end_inset
@@ -1266,6 +1309,126 @@ parameters needed in the current-limiting algorithm.
 parameter can be trusted, but a sample-and-hold methodology must be used
  when it is not changing much.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename res/BatteryEstimation.png
+	width 15cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+IV curve for ideal estimation of battery parameters
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: batt_est_idea"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename res/BatteryEstimation_cloud.png
+	width 15cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+IV curve for estimation with many samples, including noise
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: batEst_good_spread"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename res/BatteryEstimation_lowSpresd.png
+	width 15cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+IV curve for many samples of similar current draw 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: batEst_bad_spread"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -1289,7 +1452,7 @@ The estimation method can be summarized as follows:
 \end_layout
 
 \begin_layout Itemize
-Read in the present system voltage and current
+Read in the present system voltage and current.
 \end_layout
 
 \begin_layout Itemize
@@ -1307,30 +1470,30 @@ Simulated experiments showed 300ms of data averaging was a good starting
 
 \begin_deeper
 \begin_layout Itemize
-At 10ms, this equates to the past 30 samples
+At 10ms, this equates to the past 30 samples.
 \end_layout
 
 \end_deeper
 \begin_layout Itemize
 This will generate two filtered signals - one for the system current, one
- for the system voltage
+ for the system voltage.
 \end_layout
 
 \end_deeper
 \begin_layout Itemize
 Consider a window of the filtered data stretching from the present into
- the past for a given length of time
+ the past for a given length of time.
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-Simulated experiments showed 1000ms for a window length worked well
+Simulated experiments showed 1000ms for a window length worked well.
 \end_layout
 
 \end_deeper
 \begin_layout Itemize
 Estimate the equivilant series resistance of the battery from this window
- of samples
+ of samples.
 \end_layout
 
 \begin_deeper
@@ -1342,18 +1505,18 @@ reference "sub:Calculation-using-Least"
 
 \end_inset
 
- for the algorithm
+ for the algorithm.
 \end_layout
 
 \end_deeper
 \begin_layout Itemize
-Calculate the spread of current draw readings in the window under consideration
+Calculate the spread of current draw readings in the window under consideration.
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
 Here, we define spread as the standard deviation of the points within the
- window
+ window.
 \end_layout
 
 \end_deeper
@@ -1371,7 +1534,7 @@ Additionally, if this is the biggest spread seen since the last time spread
 \end_deeper
 \begin_layout Itemize
 If the Spread is below the threshsold, use the previous best-spread ESR.
- (sample and hold most-confident value)
+ (sample and hold most-confident value).
 \end_layout
 
 \begin_deeper
@@ -1385,7 +1548,7 @@ largest spread
 \end_inset
 
  threshold to zero as well in prep for the next time spread goes above the
- threshold
+ threshold.
 \end_layout
 
 \end_deeper
@@ -1470,7 +1633,7 @@ name "fig: pulsed-motor-perf"
 \begin_inset Float figure
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
@@ -1636,7 +1799,7 @@ Least-Mean-Squares
  LMS seeks to define a line with a slope such that the distance from the
  line to any point in the set is as small as possible.
  That is to say, the line is the closest to the average of all the points
- as much as po ssible.
+ as much as possible.
  The algorithm is derived by first defining this 
 \begin_inset Quotes eld
 \end_inset
@@ -1834,7 +1997,7 @@ estimation is trusted.
 \end_inset
 
 numbers.
- A snippet of .m code is proveded illustrating this logic:
+ A snippet of GNU Octave code is proveded illustrating this logic:
 \end_layout
 
 \begin_layout Standard
@@ -2019,6 +2182,24 @@ Implementation Details
 \end_layout
 
 \begin_layout Standard
+In this section, we will cover a handful of the implementation details that
+ were discovered while putting this current limiting algorithm onto FRC
+ Team 1736's 2016 robot.
+\end_layout
+
+\begin_layout Standard
+We had a shifter drivetrain with two possible ratios between wheel speed
+ and motor speed.
+ Since the encoders measured speed at the output of the gearboxes, we had
+ to add logic to account for the fact the motor speed to encoder speed ratio
+ (
+\begin_inset Formula $K_{enc\_ratio}$
+\end_inset
+
+) changed.
+\end_layout
+
+\begin_layout Standard
 The equations presented above are in a verbose form to demonstrate their
  physical meaning.
  Simplifying them is very possible to reduce the number of computations
@@ -2028,6 +2209,41 @@ The equations presented above are in a verbose form to demonstrate their
 \begin_layout Standard
 Additional voltage drops and resistances may need to be added to model the
  losses in the wires and motor controllers.
+ For example, we found a fresh battery, including wiring, connectors, and
+ circuit breaker, had closer to 0.025 ohms of series resistance.
+ Or motors also exhibited an extra 0.051 ohms of resistance in wiring and
+ connectors which we accounted for.
+\end_layout
+
+\begin_layout Standard
+Filtering the input voltage and current properly for battery estimation
+ was fairly tricky (especially to avoid time-delay).
+ A filter length of 5 (at 20ms sample rate) provided a good tradeoff between
+ delay and noise rejection.
+ Post-filtering the ESR also helpd make the reading more accurate - the
+ post-filter operation was done with a 20-point averaging filter (again
+ at a 20ms rate).
+\end_layout
+
+\begin_layout Standard
+It has been metioned that the algorithm for estimating battery parameters
+ should sample-and-hold the 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ when the spread of drawn current is too small.
+ We experimentally found that sampling new 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ only when the standard deviation of the measured current went above 7A
+ provided good noise rejection.
+\end_layout
+
+\begin_layout Standard
+Most fully-charged batteries start at a voltage above 12 volts.
+ We found that an initial guess of 13V for the open-circuit voltage was
+ better than 12.
 \end_layout
 
 \begin_layout Standard
@@ -2046,12 +2262,162 @@ It is highly recommended to keep a log of pertinent internal information.
 \end_layout
 
 \begin_layout Standard
+A complete solution for scaling factor 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ was provided in this paper.
+ However, on the actual robot, we opted instead to utilize an interative
+ solver.
+ When the estimated system voltage for certain driver commands was sensed
+ to be too low, the solver would iterate over smaller and smaller values
+ of 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ until a suitable one was found.
+ 
+\end_layout
+
+\begin_layout Standard
 Finally, it is to be noted that this algorithm will necessarily reduce the
  apparent responsiveness of the drive-train.
  Hopefully the 6-CIM drive is powerful enough that the reduction from this
  algorithm will not be missed.
  However, it is ideal to have it in place well before the drive team begins
  practice, as adding it partway in may be perceived as an undesired limitation.
+ In our implementation experience, the downgrade in performance was negligable
+ to the drivability of the robot.
+\end_layout
+
+\begin_layout Part
+Results
+\end_layout
+
+\begin_layout Section
+Experimental
+\end_layout
+
+\begin_layout Standard
+After the 2016 season, we evaluated some of the properties of the robot.
+ We never experienced a brownout during any match or during normal practice.
+ Additionally, we ran a series of experiments to determine the full effectivenes
+s of the system on a real robot.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename res/results.png
+	width 15cm
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Results of running the limiting algorithm (
+\begin_inset Formula $V_{sys,min}=7.5V$
+\end_inset
+
+) 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig: results"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The most telling of these experiments was run as follows:
+\end_layout
+
+\begin_layout Enumerate
+Put a fully-charged, older (~2014) battery into the robot
+\end_layout
+
+\begin_layout Enumerate
+Disable the motor command limiter
+\end_layout
+
+\begin_layout Enumerate
+Run the robot hard until brownouts start to occur (about a minute and a
+ half)
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Quotes eld
+\end_inset
+
+Hard
+\begin_inset Quotes erd
+\end_inset
+
+ means forward/reverse cycles at full speed
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Stop and enable the current limiting algorithm
+\end_layout
+
+\begin_layout Enumerate
+Observe brownouts cease for at least 30 seconds
+\end_layout
+
+\begin_layout Standard
+Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig: results"
+
+\end_inset
+
+ shows our results from this experiment.
+ System voltage remains above a threshold as soon as limiting is applied,
+ and brownouts cease.
+\end_layout
+
+\begin_layout Section
+Conclusion
+\end_layout
+
+\begin_layout Standard
+We have shown an algorithm which limits motor commands based around a minimum
+ system voltage criteria, utilizing physical models of batteries and motors.
+ It provides a 
+\begin_inset Quotes eld
+\end_inset
+
+next-level
+\begin_inset Quotes erd
+\end_inset
+
+ approach to solving brownout issues which can hinder FRC robot performance.
+ The reader should note that many simpler methods exist, and simpler methods
+ will suffice in many cases.
+ However, at a minimum, this method drives a deeper understanding of how
+ the electronic components of the robot interact.
 \end_layout
 
 \end_body
