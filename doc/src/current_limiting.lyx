@@ -82,7 +82,7 @@ Chris Gerth - Jeremy Lee - FRC 1736 Robot Casserole
 \end_layout
 
 \begin_layout Date
-v0.2
+v1.0
 \end_layout
 
 \begin_layout Abstract
@@ -684,7 +684,7 @@ I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
 \begin_layout Standard
 \begin_inset Formula 
 \[
-113=\frac{12-K_{i}*0}{R_{m}}
+133=\frac{12-K_{i}*0}{R_{m}}
 \]
 
 \end_inset
@@ -695,7 +695,7 @@ I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
 \begin_layout Standard
 \begin_inset Formula 
 \[
-R_{m}=\frac{12}{113}
+R_{m}=\frac{12}{133}
 \]
 
 \end_inset
@@ -706,7 +706,7 @@ R_{m}=\frac{12}{113}
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-R_{m}=0.1062\Omega
+R_{m}=0.0902\Omega
 \end{equation}
 
 \end_inset
@@ -733,7 +733,7 @@ I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
 \begin_layout Standard
 \begin_inset Formula 
 \[
-2.7=\frac{12-K_{i}*5310*\frac{\pi}{180}}{0.1062}
+2.7=\frac{12-K_{i}*5310*\frac{\pi}{180}}{0.0902}
 \]
 
 \end_inset
@@ -744,7 +744,7 @@ I_{m}[n]=\frac{V_{m}[n]-K_{i}\omega_{m}[n]}{R_{m}}
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-K_{i}=0.1263
+K_{i}=0.1268
 \end{equation}
 
 \end_inset
@@ -956,7 +956,7 @@ being the current draw from the robot.
  Note the battery's open-circuit voltage and internal resistance are considered
  constants for this part of the analysis.
  For reference, they are usually around 
-\begin_inset Formula $V_{oc}=12$
+\begin_inset Formula $V_{oc}=12.7$
 \end_inset
 
  and 
@@ -968,7 +968,7 @@ being the current draw from the robot.
 status open
 
 \begin_layout Plain Layout
-See http://www.mkbattery.com/images/ES17-12.pdf
+See http://www.mkbattery.com/images/ES17-12.pdf for the MK model ES17-12.
 \end_layout
 
 \end_inset
@@ -1570,18 +1570,30 @@ Here, we define spread as the standard deviation of the points within the
 \end_deeper
 \begin_layout Itemize
 If the spread is above a constant, tunable threshold, use the estimated
- ESR in all other calculations, assuming it to be correct.
+ 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ in all other calculations, assuming it to be correct.
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
 Additionally, if this is the biggest spread seen since the last time spread
- went above the threshold, record the spread and ESR values for later use.
+ went above the threshold, record the spread and 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ values for later use.
 \end_layout
 
 \end_deeper
 \begin_layout Itemize
-If the Spread is below the threshold, use the previous best-spread ESR.
+If the Spread is below the threshold, use the previous best-spread 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+.
  (sample and hold most-confident value).
 \end_layout
 
@@ -1610,7 +1622,11 @@ The results of such an algorithm can be seen in the provided figures: Note
 \begin_inset Quotes erd
 \end_inset
 
-, the percent error goes to nearly zero and the estimated ESR 
+, the percent error goes to nearly zero and the estimated 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1620,9 +1636,21 @@ catches up
 
  with the actual one.
  When information is sparse in-between large current draw changes, the best
- last known-good value for ESR is held.
+ last known-good value for 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ is held.
  This is a reasonable approximation, as percent error stays mostly below
- 10% for both ESR and Voc.
+ 10% for both 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ and 
+\begin_inset Formula $V_{oc}$
+\end_inset
+
+.
  The figures illustrate the algorithm working in the presence of noise in
  the readings for system voltage and current.
 \end_layout
@@ -1808,14 +1836,18 @@ is the voltage value read from the PDB sensor via a function call in software.
 
 \begin_layout Standard
 Use averaging filters on both the read-in system current and voltage.
- It may also be used on the ESR calculated.
+ It may also be used on the 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ calculated.
 \end_layout
 
 \begin_layout Subsubsection
 \begin_inset Formula $R_{bat}$
 \end_inset
 
-Calculation using Least Mean Squares on a Set of Points
+Calculation using Least-Squares on a Set of Points
 \begin_inset CommandInset label
 LatexCommand label
 name "sub:Calculation-using-Least"
@@ -1826,7 +1858,21 @@ name "sub:Calculation-using-Least"
 \end_layout
 
 \begin_layout Standard
-From http://faculty.cs.niu.edu/~hutchins/csci230/best-fit.htm.
+This algorithm was developed from a CSCI230 webpage owned by professor Harry
+ Hutchins, originally from http://faculty.cs.niu.edu/~hutchins/csci230/best-fit.htm.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+If that link is down, we saved a copy of the website along with the source
+ code for this paper.
+ Check Team 1736's Github repos, or contact the paper's authors for more
+ info.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1839,15 +1885,13 @@ from a window of current and voltage measurement points is based on the
 \begin_inset Quotes eld
 \end_inset
 
-Least-Mean-Squares
+Least-Squares
 \begin_inset Quotes erd
 \end_inset
 
  algorithm.
- LMS seeks to define a line with a slope such that the distance from the
+ It seeks to define a line with a slope such that the distance from the
  line to any point in the set is as small as possible.
- That is to say, the line is the closest to the average of all the points
- as much as possible.
  The algorithm is derived by first defining this 
 \begin_inset Quotes eld
 \end_inset
@@ -2010,7 +2054,7 @@ determines the minimum spread needed before the
 \begin_inset Formula $R_{bat}$
 \end_inset
 
-estimation is trusted.
+ estimation is trusted.
  If 
 \begin_inset Formula $\sigma_{conf}[n]$
 \end_inset
@@ -2062,7 +2106,7 @@ status open
 
 \begin_layout Plain Layout
 
-% for the ESR calculation.
+% for the R_bat calculation.
      
 \end_layout
 
@@ -2084,7 +2128,7 @@ if(spread > min_spread_thresh_A)
 
 \begin_layout Plain Layout
 
-	% save the ESR value for when the spread is no longer 
+	% save the R_bat value for when the spread is no longer 
 \end_layout
 
 \begin_layout Plain Layout
@@ -2105,7 +2149,7 @@ if(spread > min_spread_thresh_A)
 
 \begin_layout Plain Layout
 
-		prev_best_esr = ESR_est_raw(i);         
+		prev_best_R_bat = R_bat_est_raw(i);         
 \end_layout
 
 \begin_layout Plain Layout
@@ -2172,7 +2216,7 @@ if(confidence(i) == 0)
 
 \begin_layout Plain Layout
 
-	ESR_est_raw(i) = prev_best_esr;     
+	R_bat_est_raw(i) = prev_best_R_bat;     
 \end_layout
 
 \begin_layout Plain Layout
@@ -2226,7 +2270,18 @@ The two battery parameters have just been estimated from measured system
 \end_layout
 
 \begin_layout Part
-Implementation Details
+Implementation
+\end_layout
+
+\begin_layout Section
+\begin_inset Quotes eld
+\end_inset
+
+Real World
+\begin_inset Quotes erd
+\end_inset
+
+ Considerations
 \end_layout
 
 \begin_layout Standard
@@ -2268,9 +2323,12 @@ Filtering the input voltage and current properly for battery estimation
  was fairly tricky (especially to avoid time-delay).
  A filter length of 5 (at 20ms sample rate) provided a good trade-off between
  delay and noise rejection.
- Post-filtering the ESR also helped make the reading more accurate - the
- post-filter operation was done with a 20-point averaging filter (again
- at a 20ms rate).
+ Post-filtering 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ also helped make the reading more accurate - the post-filter operation
+ was done with a 20-point averaging filter (again at a 20ms rate).
 \end_layout
 
 \begin_layout Standard
@@ -2289,9 +2347,45 @@ It has been mentioned that the algorithm for estimating battery parameters
 \end_layout
 
 \begin_layout Standard
-Most fully-charged batteries start at a voltage above 12 volts.
- We found that an initial guess of 13V for the open-circuit voltage was
- better than 12.
+The calculations presume that a certain voltage can be commanded to the
+ motors with good precision.
+ For some motor controllers, a linearization & 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ compensation step may be needed to ensure that when a certain voltage is
+ commanded in software, that voltage actually ends up at the speed controller
+ output.
+\end_layout
+
+\begin_layout Standard
+Empirical measurements could help provide a better guess of starting open-circui
+t voltage for the battery than simply guessing somewhere between 12 and
+ 13.
 \end_layout
 
 \begin_layout Standard
@@ -2324,7 +2418,6 @@ A complete solution for scaling factor
 \end_inset
 
  until a suitable one was found.
- 
 \end_layout
 
 \begin_layout Standard
@@ -2336,6 +2429,157 @@ Finally, it is to be noted that this algorithm will necessarily reduce the
  practice, as adding it partway in may be perceived as an undesired limitation.
  In our implementation experience, the downgrade in performance was negligible
  to the drivability of the robot.
+\end_layout
+
+\begin_layout Section
+Future Experiments
+\end_layout
+
+\begin_layout Standard
+While reviewing this paper, there were many alternate implementations suggested
+ and considered.
+ Not all experiments have been completed yet.
+ However, we will detail some of the future-work suggestions we are considering.
+\end_layout
+
+\begin_layout Standard
+When the spread of current draw is too low to derive good data about the
+ battery, we used sample-and-hold on 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ .
+ However, one of our paper reviewers suggested that at timestep n, we sample-and
+-hold the most recent 
+\begin_inset Formula $V_{oc}$
+\end_inset
+
+ and calculate 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ as:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+R_{bat}[n]=\frac{V_{oc}-V_{sys}[n]}{I_{sys}[n]}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since 
+\begin_inset Formula $V_{oc}$
+\end_inset
+
+ changes more slowly than 
+\begin_inset Formula $R_{bat}$
+\end_inset
+
+ over a given time period, this may be a better approach.
+ However, data link delays and noise in 
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+ and 
+\begin_inset Formula $I_{sys}$
+\end_inset
+
+ may also skew the calculation unacceptably.
+ Experimentation with this variation is still a to-do for our team.
+\end_layout
+
+\begin_layout Standard
+Some speed controllers have built-in control modes for limiting or servoing
+ to specific current outputs (ex: the Talon SRX).
+ We have not yet tested these modes, but it could be possible to utilize
+ them, either as the primary limiting mechanism or as an additional protection
+ mechanism.
+ Still, the battery parameter estimation would be useful for determining
+ the maximum theoretical current draw for the battery (which should change
+ over the course of a normal FRC match).
+\end_layout
+
+\begin_layout Standard
+For robots with air compressors on-board, the current draw of this device
+ may be important.
+ We haven't considered it yet.
+ However, most compressors do publish a table of pressure vs.
+ current draw.
+ If you are measuring analog pressure in your system, you could do a simple
+ lookup to predict what the compressor current draw would be if you were
+ to turn it on right now.
+ This knowledge could be used as part of the limiting strategy to determine
+ if it would be allowable to turn on the compressor right now.
+ More complex algorithms could prioritize sending power to certain motors
+ or the compressor, based on what is most important for the robot's present
+ state.
+\end_layout
+
+\begin_layout Standard
+The limiting-factor calculations presume the user control input to the algorithm
+ is a desired voltage to the motor (or, at least, percent of 
+\begin_inset Formula $V_{sys}$
+\end_inset
+
+ to apply to the motor).
+ Desired motor speed is another common input.
+ There is some potential to utilize motor-torque calculations to determine
+ the maximum loop-to-loop delta in motor speed which is electrically possible.
+ However, this would require knowing the impact of a given motor torque
+ on motor rotational speed, which in turn requires knowledge of the weight,
+ physical configuration, and parasitic loads in the robot.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Battery Parameters and a 
+\begin_inset Formula $V_{sys,min}$
+\end_inset
+
+ yield a maximum 
+\begin_inset Formula $I_{sys}$
+\end_inset
+
+.
+ Maximum 
+\begin_inset Formula $I_{sys}$
+\end_inset
+
+ yields a maximum 
+\begin_inset Formula $I_{m}$
+\end_inset
+
+for each motor.
+ Powering the motor at 
+\begin_inset Formula $I_{m,max}$
+\end_inset
+
+ produces a maximum theoretical torque at the motor shaft.
+ This torque, transfered through the (presumed massless) gearboxes & wheels
+ and adjusted for friction and other parasitic loads, produces a force on
+ the robot's mass.
+ This causes the robot to accelerate.
+ The physical motion of the robot transfers back through the wheels & gearboxes
+ to the motors, yeilding a motor rotational velocity, all presuming the
+ wheels do not slip.
+ This is a 
+\emph on
+very 
+\emph default
+theoretical calculation.
+\end_layout
+
+\end_inset
+
+ Given these extra needs, we do not believe this is a nice path to go down,
+ however the thought experiment has yet to be fully fleshed out.
+ 
 \end_layout
 
 \begin_layout Part
@@ -2466,6 +2710,32 @@ next-level
  will suffice in many cases.
  However, at a minimum, this method drives a deeper understanding of how
  the electronic components of the robot interact.
+\end_layout
+
+\begin_layout Section
+Special Thanks
+\end_layout
+
+\begin_layout Standard
+We would like to thank a few individuals and organizations who were instrumental
+ in the development of this algorithm:
+\end_layout
+
+\begin_layout Standard
+Aaron and Daniel from 1736 for their help developing & implementing the
+ ideas in this paper, and presenting the content for judging.
+\end_layout
+
+\begin_layout Standard
+Thanks to Larry, Thomas, Olivia, Jack, and Steven from 1736 and Ether from
+ Chief Delphi for your valuable and detailed feedback on the content of
+ this paper.
+\end_layout
+
+\begin_layout Standard
+Special thanks to our sponsors, Caterpillar Inc.
+ , PTC, and the Peoria Police Benevolent Association - without your support,
+ none of this is possible.
 \end_layout
 
 \end_body
