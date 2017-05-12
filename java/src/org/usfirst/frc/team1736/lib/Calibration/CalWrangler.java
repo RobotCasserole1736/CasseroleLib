@@ -1,5 +1,27 @@
 package org.usfirst.frc.team1736.lib.Calibration;
 
+
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,16 +32,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
 
 /**
  * DESCRIPTION: <br>
@@ -121,7 +133,13 @@ public class CalWrangler {
                                     System.out.println("Info: Calibration Wrangler: " + cal.name + " was overridden to "
                                             + Double.toString(cal.cur_val));
                                 }
-                                cal.overridden = true;
+                                
+                                //Only call the calibration overridden if the values don't match.
+                                if(cal.cur_val != cal.default_val){
+                                	cal.overridden = true;
+                                } else {
+                                	cal.overridden = false;
+                                }
 
                             } catch (NumberFormatException e) {
                                 System.out.println("WARNING: Calibration Wrangler: " + line_parts[CAL_NAME_COL]
@@ -171,8 +189,10 @@ public class CalWrangler {
         // Indicate any errors
         if (errors_present) {
             resetAllCalsToDefault();
+            System.out.println("ERROR: Calibration: could not load cal file " + calFile + ". All calibrations left at default values.");
             return -1;
         } else {
+        	System.out.println("Calibration: Successfully loaded cal file " + calFile);
             return 0;
         }
 
@@ -232,6 +252,7 @@ public class CalWrangler {
         if (errors_present) {
             return -1;
         } else {
+        	System.out.println("Calibration: Cal file " + calFile + " successfully written.");
             return 0;
         }
     }

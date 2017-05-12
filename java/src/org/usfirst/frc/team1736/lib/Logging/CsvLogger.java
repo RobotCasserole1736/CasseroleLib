@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.Vector;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 
 import java.io.BufferedWriter;
@@ -17,16 +18,26 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.MethodHandle;
 import static java.lang.invoke.MethodType.*;
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
 
 /**
  * DESCRIPTION: <br>
@@ -76,7 +87,7 @@ public class CsvLogger {
      */
     public static int forceSync() {
         if (log_open == false) {
-            System.out.println("Error - Log is not yet opened, cannot sync!");
+            DriverStation.reportError("Error - Log is not yet opened, cannot sync!", false);
             return -1;
         }
         try {
@@ -84,7 +95,7 @@ public class CsvLogger {
         }
         // Catch ALL the errors!!!
         catch (IOException e) {
-            System.out.println("Error flushing IO stream file: " + e.getMessage());
+        	DriverStation.reportError("Error flushing IO stream file: " + e.getMessage(), false);
             return -1;
         }
 
@@ -103,7 +114,6 @@ public class CsvLogger {
     public static int close() {
 
         if (log_open == false) {
-            System.out.println("Warning - Log is not yet opened, nothing to close.");
             return 0;
         }
 
@@ -113,7 +123,7 @@ public class CsvLogger {
         }
         // Catch ALL the errors!!!
         catch (IOException e) {
-            System.out.println("Error Closing Log File: " + e.getMessage());
+        	DriverStation.reportError("Error Closing Log File: " + e.getMessage(), false);
             return -1;
         }
         return 0;
@@ -155,7 +165,7 @@ public class CsvLogger {
     public static int init() {
 
         if (log_open) {
-            System.out.println("Warning - log is already open!");
+        	DriverStation.reportWarning("Warning - log is already open!", false);
             return 0;
         }
 
@@ -198,7 +208,7 @@ public class CsvLogger {
         }
         // Catch ALL the errors!!!
         catch (IOException e) {
-            System.out.println("ERROR - cannot initalize log file: " + e.getMessage());
+        	DriverStation.reportError("ERROR - cannot initalize log file: " + e.getMessage(), false);
             return -1;
         }
 
@@ -229,15 +239,33 @@ public class CsvLogger {
                 MethodHandle mh = methodHandles.get(i);
                 String fieldName = dataFieldNames.get(i);
                 Vector<Object> mhArgs = mhReferenceObjects.get(i);
-                log_file.write(getStandardLogData(mh, mhArgs) + ", ");
+                log_file.write(getStandardLogData(mh, mhArgs,fieldName) + ", ");
             }
             log_file.write("\n");
         } catch (Exception ex) {
-            System.out.println("Error writing to log file: " + ex.getMessage());
+        	DriverStation.reportError("Error writing to log file: " + ex.getMessage(), false);
             return -2;
         }
 
         return 0;
+    }
+    
+    /**
+     * our wonderful attempt at optimization to do a "dry run" with all methods in an attempt to 
+     * cache the results and not bog down the first loop.
+     */
+    public static void preCacheAllMethods(){
+        try {
+            for (int i = 0; i < methodHandles.size(); i++) {
+                MethodHandle mh = methodHandles.get(i);
+                String fieldName = dataFieldNames.get(i);
+                Vector<Object> mhArgs = mhReferenceObjects.get(i);
+                getStandardLogData(mh, mhArgs,fieldName);
+            }
+        } catch (Exception ex) {
+        	//do nothing
+        }
+    	
     }
 
 
@@ -337,7 +365,7 @@ public class CsvLogger {
     private static void addLoggingField(MethodType methodType, String dataFieldName, String unitName, Class<?> classRef,
             String methodName, Object reference, Object... args) {
         if (log_open) {
-            System.out.println("Error: cannot add logging field while log file is open");
+        	DriverStation.reportError("Error: cannot add logging field while log file is open",false);
             return;
         }
         for (int i = 0; i < dataFieldNames.size(); i++) {
@@ -348,7 +376,7 @@ public class CsvLogger {
                 for (Object arg : args)
                     mhArgs.add(arg);
                 mhReferenceObjects.set(i, mhArgs);
-                System.out.println("Warning: log field already present. Reference updated");
+                DriverStation.reportWarning("Warning: log field named "+ fieldName + " already present. Reference updated", false);
                 return;
             }
         }
@@ -356,14 +384,13 @@ public class CsvLogger {
         try {
             methodHandle = MethodHandles.lookup().findVirtual(classRef, methodName, methodType);
         } catch (NoSuchMethodException e) {
-            System.out.println("Error: Could not add logging field " + dataFieldName + " (no such method)");
+        	DriverStation.reportError("Error: Could not add logging field " + dataFieldName + " (no such method)", true);
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             try {
                 methodHandle = MethodHandles.lookup().findStatic(classRef, methodName, methodType);
             } catch (Exception ex) {
-                System.out.println("Error: Could not add logging field " + dataFieldName);
-                ex.printStackTrace();
+            	DriverStation.reportError("Error: Could not add logging field " + dataFieldName, true);
             }
         }
         dataFieldNames.add(dataFieldName);
@@ -386,17 +413,16 @@ public class CsvLogger {
      * @param args Arguments for the given Method Handle
      * @return double value for double return types, 1 or 0 for boolean return types
      */
-    private static double getStandardLogData(MethodHandle methodHandle, Vector<Object> args) {
+    private static double getStandardLogData(MethodHandle methodHandle, Vector<Object> args, String name) {
         try {
             if (methodHandle.type().returnType() == double.class)
                 return (double) methodHandle.invokeWithArguments(args);
             else if (methodHandle.type().returnType() == boolean.class)
                 return ((boolean) methodHandle.invokeWithArguments(args)) ? 1.0 : 0.0;
         } catch (Throwable e) {
-            System.out.println("Error running method for data logging");
-            e.printStackTrace();
+        	DriverStation.reportError("Error running method " + name + " for data logging", true);
         }
-        return 0;
+        return -1.0;
     }
 
 }

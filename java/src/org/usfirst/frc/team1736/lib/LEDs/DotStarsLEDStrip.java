@@ -4,16 +4,26 @@ import java.util.Arrays;
 import java.util.TimerTask;
 import edu.wpi.first.wpilibj.SPI;
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
+
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
 
 /**
  * DESCRIPTION: <br>
@@ -35,15 +45,11 @@ import edu.wpi.first.wpilibj.SPI;
  */
 
 
-public class DotStarsLEDStrip {
+public class DotStarsLEDStrip implements CasseroleLEDInterface {
 
     // Thread stuff
     // Thread to run the periodic update function on
     java.util.Timer timerThread;
-
-    // period between periodic function calls
-    // in milliseconds
-    double m_update_period_ms = 100;
 
     // Constant values for fixed things in the serial data stream
     static byte[] startFrame = {0x00, 0x00, 0x00, 0x00};
@@ -88,7 +94,7 @@ public class DotStarsLEDStrip {
      * 
      * @param numLEDs number of LED's in the total strip.
      */
-    DotStarsLEDStrip(int numLEDs) {
+    public DotStarsLEDStrip(int numLEDs) {
 
         // Number of bytes in color buffer needed - each LED has 4 bytes (1 brightness, then 1 for
         // RGB each),
@@ -115,8 +121,7 @@ public class DotStarsLEDStrip {
         spi.setClockActiveLow();
         spi.setClockRate(SPI_CLK_RATE);
         spi.setSampleDataOnFalling();
-
-        timerThread = new java.util.Timer();
+        timerThread = new java.util.Timer("DotStar LED Strip Control");
         timerThread.schedule(new DotStarsTask(this), (long) (m_update_period_ms), (long) (m_update_period_ms));
 
     }
@@ -128,22 +133,26 @@ public class DotStarsLEDStrip {
      * @return 0 on successful write, -1 on failure
      */
     private int updateColors() {
+    	@SuppressWarnings("unused")
         int ret_val = 0;
+    	final int CHUNK_SIZE = 127; // we can only TX 127 bytes at a time
 
         // If we need to write something, attempt to put it on the SPI port
         if (newBuffer) {
             // Make local copy of ledBuffer to help make color changing clean
             byte[] temp_ledBuff = Arrays.copyOfRange(ledBuffer, 0, ledBuffer.length);
 
-            // Chunk the TX'es into smaller size, since it looks like
-            // we can only TX 128 bytes at a time
-            for (int offset = 0; offset < temp_ledBuff.length; offset = offset + 128) {
+            // Chunk the TX'es into smaller size, otherwise we get -1 returned from spi.write
+            //This is undocumented, and was found by experimentation.
+            for (int offset = 0; offset < temp_ledBuff.length; offset = offset + CHUNK_SIZE) {
                 int start_index = offset;
-                int end_index = Math.min(offset + 128, temp_ledBuff.length);
+                int end_index = Math.min(offset + CHUNK_SIZE, temp_ledBuff.length);
                 int size = end_index - start_index;
                 byte[] tx_array = Arrays.copyOfRange(temp_ledBuff, start_index, end_index);
-                ret_val = spi.write(tx_array, size);
-            }
+            	ret_val = spi.write(tx_array, size); //I think this returns number of bytes actually written?
+        	}
+
+            
 
         }
 

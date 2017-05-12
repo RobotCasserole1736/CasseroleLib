@@ -1,19 +1,29 @@
 package org.usfirst.frc.team1736.lib.CoProcessor;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
 
 /**
  * DESCRIPTION: <br>
@@ -38,7 +48,7 @@ public class UDPReceiver{
     /**
      * Constructor for the UDP reciever. Sets up internal memory structures in prep to start listening for packets.
      * 
-     * @param listen_to_addr String of the IP address of the coprocessor (For example, "10.17.36.20")
+     * @param listen_to_addr String of the IP address of the coprocessor (For example, "10.17.36.8")
      * @param listen_on_port integer port number to listen on. Often between 5800 and 5810 per FMS whitepaper. Must match whatever port the coprocessor is sending information to.
      */
     public UDPReceiver(String listen_from_addr_in, int listen_on_port_in) {

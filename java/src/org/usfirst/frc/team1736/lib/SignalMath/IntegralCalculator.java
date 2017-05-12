@@ -2,17 +2,26 @@ package org.usfirst.frc.team1736.lib.SignalMath;
 
 import edu.wpi.first.wpilibj.Timer;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
 
 /**
  * Class which implements various calculations of the integral of a signal over time. Useful for
@@ -110,15 +119,15 @@ public class IntegralCalculator {
         if (choice == 0) /* rectangular rule */ {
             value += in * (cur_time - prev_time);
         } else if (choice == 1) /* trapezoid rule */ {
-            value = ((cur_time - prev_time) / 2) * (point_num[0] + point_num[1]);
+            value = ((cur_time - prev_time) / 2.0) * (point_num[0] + point_num[1]);
         } else if (choice == 2) /* simpson's rule */ {
-            value = (1 / 2) * ((cur_time - prev_time) / 6) * (point_num[0] + (4 * point_num[1]) + point_num[2]);
+            value = (1.0 / 2.0) * ((cur_time - prev_time) / 6.0) * (point_num[0] + (4.0 * point_num[1]) + point_num[2]);
         } else if (choice == 3) /* simpson's 3/8 rule */ {
-            value = (1 / 3) * ((cur_time - prev_time) / 8)
-                    * (point_num[0] + (3 * point_num[1]) + (3 * point_num[2]) + point_num[3]);
+            value = (1.0 / 3.0) * ((cur_time - prev_time) / 8.0)
+                    * (point_num[0] + (3.0 * point_num[1]) + (3.0 * point_num[2]) + point_num[3]);
         } else if (choice == 4) /* boole's rule */ {
-            value = (1 / 4) * ((cur_time - prev_time) / 90) * ((7 * point_num[0]) + (32 * point_num[1])
-                    + (12 * point_num[2]) + (32 * point_num[3]) + (7 * point_num[4]));
+            value = (1.0 / 4.0) * ((cur_time - prev_time) / 90.0) * ((7.0 * point_num[0]) + (32.0 * point_num[1])
+                    + (12.0 * point_num[2]) + (32.0 * point_num[3]) + (7.0 * point_num[4]));
         } else { // invalid number. Don't do any calculation
             System.out.println("Warning: invalid number choice in IntegralCalculator. No calculation will be done.");
 

@@ -1,5 +1,26 @@
 package org.usfirst.frc.team1736.lib.AutoSequencer;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
+
 import java.util.ArrayList;
 
 /**
@@ -18,7 +39,7 @@ import java.util.ArrayList;
  * event's update() method is guaranteed. The child event will no longer be run once it declares
  * itself as "done". <br>
  * <br>
- * All events on the timeline must implement the functions defined here. User Init is for performing
+ * All events on the timeline must implement the functions defined here. Constructor is for performing
  * all user-specific actions during sequencer setup. User update is the periodic update function
  * which the sequencer will call as long as the event is active. isDone() signals the sequencer this
  * event no longer needs to run, while isTriggered() is used for child events to signal they need to
@@ -49,7 +70,6 @@ public abstract class AutoEvent {
         localUpdateCount = 0;
         isRunning = false;
         childEvents = new ArrayList<AutoEvent>(0);
-        userInit();
     }
 
 
@@ -79,10 +99,9 @@ public abstract class AutoEvent {
         userUpdate();
         localUpdateCount++;
     }
-
-
-    /** Perform any actions needed to initalize this event */
-    public abstract void userInit();
+    
+    /** perform all actions needed at the start of the event*/
+    public abstract void userStart();
 
 
     /** Perform all actions needed during periodic update for this event */

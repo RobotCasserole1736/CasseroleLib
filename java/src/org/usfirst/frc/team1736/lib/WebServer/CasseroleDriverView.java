@@ -1,10 +1,30 @@
 package org.usfirst.frc.team1736.lib.WebServer;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
 import org.json.simple.JSONObject;
-import org.usfirst.frc.team1736.lib.Calibration.CalWrangler;
 
 /**
  * DESCRIPTION: <br>
@@ -26,20 +46,11 @@ import org.usfirst.frc.team1736.lib.Calibration.CalWrangler;
 
 public class CasseroleDriverView {
     /** The list of objects which are broadcast. Must be volatile to ensure atomic accesses */
-    static volatile Hashtable<String, JSONObject> driverView_objects = new Hashtable<String, JSONObject>();
-    static volatile List<String> obj_vals = new ArrayList<String>();
-    static volatile List<String> ordered_obj_name_list = new ArrayList<String>(); // Used to help
-                                                                                  // preserve the
-                                                                                  // order the user
-                                                                                  // creates the
-                                                                                  // dials in, since
-                                                                                  // the hash table
-                                                                                  // destroys this
-                                                                                  // info
+    static volatile Hashtable<String, DriverViewDial> dialObjects = new Hashtable<String, DriverViewDial>();
+    static volatile Hashtable<String, DriverViewWebcam> webcamObjects = new Hashtable<String, DriverViewWebcam>();
+    static volatile Hashtable<String, DriverViewBoolean> booleanObjects = new Hashtable<String, DriverViewBoolean>();
+    static volatile Hashtable<String, DriverViewStringBox> stringBoxObjects = new Hashtable<String, DriverViewStringBox>();
 
-    static int num_sendable_objs = 0;
-
-    static final String VAL_DISPLAY_FORMATTER = "%5.2f";
 
 
     /**
@@ -58,39 +69,12 @@ public class CasseroleDriverView {
      * @param min_acceptable_in Lower limit of green display area on drawn dial.
      * @param max_acceptable_in Upper limit of green display area on drawn dial.
      */
-    public static void newDial(String name_in, double min_in, double max_in, double step_in, double min_acceptable_in,
+    @SuppressWarnings("unchecked")
+	public static void newDial(String name_in, double min_in, double max_in, double step_in, double min_acceptable_in,
             double max_acceptable_in) {
-        // Sanitize user inputs
-        if (min_in >= max_in) {
-            System.out
-                    .println("WARNING: new dial " + name_in + " has min value greater than maximum. Not adding dial.");
-            return;
-        }
-        if (min_acceptable_in >= max_acceptable_in) {
-            System.out.println("WARNING: new dial " + name_in
-                    + " has an acceptable min value greater than maximum. Not adding dial.");
-            return;
-        }
-        if (max_in - min_in <= step_in) {
-            System.out.println("WARNING: new dial " + name_in
-                    + " has too small a step size. Make sure the step size is smaller than the range of the dial. Not adding dial.");
-            return;
-        }
-        // Create new object
-        JSONObject new_obj = new JSONObject();
-        new_obj.put("type", "dial");
-        new_obj.put("name", name_in);
-        new_obj.put("index", num_sendable_objs);
-        new_obj.put("min", min_in);
-        new_obj.put("max", max_in);
-        new_obj.put("min_acceptable", min_acceptable_in);
-        new_obj.put("max_acceptable", max_acceptable_in);
-        new_obj.put("step", step_in);
-        obj_vals.add(String.format(VAL_DISPLAY_FORMATTER, min_in));
-        driverView_objects.put(name_in, new_obj);
-        ordered_obj_name_list.add(name_in);
-        num_sendable_objs += 1;
-        return;
+    	
+    	DriverViewDial newDial = new DriverViewDial(name_in, min_in, max_in, step_in, min_acceptable_in, max_acceptable_in);
+    	dialObjects.put(name_in, newDial);
     }
 
 
@@ -107,19 +91,13 @@ public class CasseroleDriverView {
      *        drawn on top of the already-rotated image.
      * @param name_in Name of the web stream. Internal uses only, currently...
      */
-    public static void newWebcam(String name_in, String url_in, double marker_x, double marker_y,
+    @SuppressWarnings("unchecked")
+	public static void newWebcam(String name_in, String url_in, double marker_x, double marker_y,
             double img_rotate_deg) {
-        // Create new object
-        JSONObject new_obj = new JSONObject();
-        new_obj.put("type", "webcam");
-        new_obj.put("name", name_in);
-        new_obj.put("url", url_in);
-        new_obj.put("targ_x_pct", marker_x);
-        new_obj.put("targ_y_pct", marker_y);
-        new_obj.put("rotation_deg", img_rotate_deg);
-        driverView_objects.put(name_in, new_obj);
-        ordered_obj_name_list.add(name_in);
-        return;
+    	
+    	DriverViewWebcam newWebcam = new DriverViewWebcam( name_in, url_in, marker_x, marker_y, img_rotate_deg);
+    	webcamObjects.put(name_in, newWebcam);
+
     }
 
 
@@ -131,17 +109,11 @@ public class CasseroleDriverView {
      * @param name_in Name of the value to display. Also used to reference the value when updating
      *        it.
      */
-    public static void newStringBox(String name_in) {
-        // Create new object
-        JSONObject new_obj = new JSONObject();
-        new_obj.put("type", "stringbox");
-        new_obj.put("name", name_in);
-        new_obj.put("index", num_sendable_objs);
-        obj_vals.add("N/A");
-        driverView_objects.put(name_in, new_obj);
-        ordered_obj_name_list.add(name_in);
-        num_sendable_objs += 1;
-        return;
+    @SuppressWarnings("unchecked")
+	public static void newStringBox(String name_in) {
+    	
+    	DriverViewStringBox newStringbox = new DriverViewStringBox( name_in );
+    	stringBoxObjects.put(name_in, newStringbox);
     }
 
 
@@ -158,18 +130,11 @@ public class CasseroleDriverView {
      * @param color_in Color to display. Currently, only supported values are "red", "yellow", and
      *        "green".
      */
-    public static void newBoolean(String name_in, String color_in) {
-        // Create new object
-        JSONObject new_obj = new JSONObject();
-        new_obj.put("type", "boolean");
-        new_obj.put("name", name_in);
-        new_obj.put("color", color_in);
-        new_obj.put("index", num_sendable_objs);
-        obj_vals.add("False");
-        driverView_objects.put(name_in, new_obj);
-        ordered_obj_name_list.add(name_in);
-        num_sendable_objs += 1;
-        return;
+    @SuppressWarnings("unchecked")
+	public static void newBoolean(String name_in, String color_in) {
+
+    	DriverViewBoolean newBoolean = new DriverViewBoolean( name_in, color_in );
+    	booleanObjects.put(name_in, newBoolean);
     }
 
 
@@ -182,17 +147,11 @@ public class CasseroleDriverView {
      */
     // might be called from different threads, but all calls go to the web server thread.
     public static synchronized void setDialValue(String name_in, double value_in) {
-        int index = -1;
-        if (driverView_objects.containsKey(name_in)) {
-            JSONObject obj_tmp = driverView_objects.get(name_in);
-            index = (int) obj_tmp.get("index");
-            obj_vals.set(index, String.format(VAL_DISPLAY_FORMATTER,
-                    Math.min((double) obj_tmp.get("max"), Math.max((double) obj_tmp.get("min"), value_in))));
-            return;
-        }
-        // If we get here, it means we didn't find the value
-        System.out.println("WARNING: could not find a dial value for " + name_in + ". No value set.");
-        return;
+    	if(dialObjects.containsKey(name_in)){
+    		dialObjects.get(name_in).setVal(value_in);
+    	} else {
+    		System.out.println("Warning: Driverview web server: No dial named " + name_in + " exists yet. No value set. ");
+    	}
     }
 
 
@@ -205,16 +164,11 @@ public class CasseroleDriverView {
      */
     // might be called from different threads, but all calls go to the web server thread.
     public static synchronized void setStringBox(String name_in, String value_in) {
-        int index = -1;
-        if (driverView_objects.containsKey(name_in)) {
-            JSONObject obj_tmp = driverView_objects.get(name_in);
-            index = (int) obj_tmp.get("index");
-            obj_vals.set(index, value_in);
-            return;
-        }
-        // If we get here, it means we didn't find the value
-        System.out.println("WARNING: could not find a string box for " + name_in + ". No value set.");
-        return;
+    	if(stringBoxObjects.containsKey(name_in)){
+    		stringBoxObjects.get(name_in).setVal(value_in);
+    	} else {
+    		System.out.println("Warning: Driverview web server: No stringbox named " + name_in + " exists yet. No value set. ");
+    	}
     }
 
 
@@ -226,16 +180,39 @@ public class CasseroleDriverView {
      */
     // might be called from different threads, but all calls go to the web server thread.
     public static synchronized void setBoolean(String name_in, boolean value_in) {
-        int index = -1;
-        if (driverView_objects.containsKey(name_in)) {
-            JSONObject obj_tmp = driverView_objects.get(name_in);
-            index = (int) obj_tmp.get("index");
-            obj_vals.set(index, value_in ? "1" : "0");
-            return;
-        }
-        // If we get here, it means we didn't find the value
-        System.out.println("WARNING: could not find a boolean for for " + name_in + ". No value set.");
-        return;
+    	if(booleanObjects.containsKey(name_in)){
+    		booleanObjects.get(name_in).setVal(value_in);
+    	} else {
+    		System.out.println("Warning: Driverview web server: No boolean named " + name_in + " exists yet. No value set. ");
+    	}
+    }
+    
+    
+    /**
+     * Update the location of the crosshairs on the webcam stream
+     * 
+     */
+    // might be called from different threads, but all calls go to the web server thread.
+    public static synchronized void setWebcamCrosshairs(String name_in, double x_pct, double y_pct) {
+    	if(webcamObjects.containsKey(name_in)){
+    		webcamObjects.get(name_in).setCrosshairs(x_pct, y_pct);
+    	} else {
+    		System.out.println("Warning: Driverview web server: No webcam named " + name_in + " exists yet. No value set. ");
+    	}
+    }
+    
+    /**
+     * @return a set of DriverViewObjects which can be used for working on the set of all things on the driver view.
+     */
+    public static ArrayList<DriverViewObject> getAllObjects(){
+    	ArrayList<DriverViewObject> tmp_list = new ArrayList<DriverViewObject>(); 
+    	
+    	tmp_list.addAll(dialObjects.values());
+    	tmp_list.addAll( webcamObjects.values());
+    	tmp_list.addAll( booleanObjects.values());
+    	tmp_list.addAll( stringBoxObjects.values());
+    	
+    	return tmp_list;
     }
 
 

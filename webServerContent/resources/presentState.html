@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 <html>
+
 <title>Casserole Data Live State View</title>
 
 <head>
@@ -12,7 +13,7 @@
 <h1>Data From Robot</h1>
 <hr>
 <div/>
-<div id="id01">COM Status: Socket Not Open</div>
+<div id="id01">COM Status: Socket Not Yet Opened...</div>
 
 <br>
 
@@ -33,42 +34,7 @@
 </div>
 <!-- END Common navigation bar -->
 
-
-
-<script>
-var dataSocket = new WebSocket("ws://roboRIO-1736-FRC.local:5805/statestream")
-var numTransmissions = 0;
-
-dataSocket.onopen = function (event) {
-  document.getElementById("id01").innerHTML = "Socket Open";
-};
-
-dataSocket.onerror = function (error) {
-  document.getElementById("id01").innerHTML = "COM Status: Error with socket";
-};
-
-dataSocket.onmessage = function (event) {
-  genTable(event.data);
-  numTransmissions = numTransmissions + 1;
-  document.getElementById("id01").innerHTML = "COM Status: Socket Open. RX Count:" + numTransmissions; 
-};
-
-function genTable(json_data) {
-    var arr = JSON.parse(json_data);
-    var i;
-    var out = "<table border=\"1\">";
-
-    for(i = 0; i < arr.state_array.length; i++) {
-        out += "<tr><td>" +
-        arr.state_array[i].name +
-        "</td><td style=\"width: 200px;\">" +
-        arr.state_array[i].value +
-        "</td></tr>";
-    }
-    out += "</table>";
-    document.getElementById("id02").innerHTML = out;
-}
-
+<script type="text/javascript" src="/presentState.js" >
 </script>
 
 </body>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html>
+<title>Robot Main</title>
+
+<head>
+  <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+<h1>FRC 1736 Robot Casserole</h1>
+<div>
+<p>
+These are the controls for the FRC 1736 robot. 
+</p>
+</div>
+
+<!-- Common navigation bar -->
+<hr>
+<p>
+Driver 1 (Drivetrain) - Xbox Controller
+</p>
+
+<style>
+table, th, td{
+	border: 1px solid black;	
+}
+</style>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Type</th>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>	
+<tbody>
+<tr>
+<td>LX</td>
+<td>Axis</td>
+<td>Strafe</td>
+<td>Controls left and right motion of robot</td>
+</tr>
+<tr>
+<td>LY</td>
+<td>Axis</td>
+<td>Fwd-Rev</td>
+<td>Controls forward and reverse motion of robot</td>
+</tr>
+<tr>
+<td>RX</td>
+<td>Axis</td>
+<td>CROT</td>
+<td>Controls rotational motion of the robot</td>
+</tr>
+<tr>
+<td>RY</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RStick Btn</td>
+<td>Button</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LBumper</td>
+<td>Button</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RBumper</td>
+<td>Button</td>
+<td>Auto-Align</td>
+<td>Execute vision system auto-alignment routine. Inhibits shooting until aligned.</td>
+</tr>
+<tr>
+<td>R Trigger</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>L Trigger</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>B</td>
+<td>Button</td>
+<td>Camera Pos Gear</td>
+<td>Press to point the camera at the gear deployment mechanism</td>
+</tr>
+<tr>
+<td>A</td>
+<td>Button</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Y</td>
+<td>Button</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>X</td>
+<td>Button</td>
+<td>Camera Pos Intake</td>
+<td></td>
+</tr>
+<tr>
+<td>POV UP</td>
+<td>POVHAT</td>
+<td>Gyro Reset</td>
+<td>* Not Yet Implemented * hold to reset the gyro while facing upfield</td>
+</tr>
+<tr>
+<td>POV DN</td>
+<td>POVHAT</td>
+<td>Gyro Reset</td>
+<td>hold to reset the gyro while facing downfield</td>
+</tr>
+<tr>
+<td>POV RT</td>
+<td>POVHAT</td>
+<td>Gyro Reset</td>
+<td>* Not Yet Implemented * hold to reset the gyro while facing right</td>
+</tr>
+<tr>
+<td>POV LF</td>
+<td>POVHAT</td>
+<td>Gyro Reset</td>
+<td>* Not Yet Implemented * hold to reset the gyro while facing left</td>
+</tr>
+<tr>
+<td>Back</td>
+<td>Button</td>
+<td>Stop Air Compressor</td>
+<td>Disables the air compressor (save battery)</td>
+</tr>
+<tr>
+<td>Start</td>
+<td>Button</td>
+<td>Run Air Compressor</td>
+<td>Enables the air compressor</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Driver 2 (Manipulators) - Xbox Controller
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Type</th>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LX</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LY</td>
+<td>Axis</td>
+<td>Climb</td>
+<td>Pull back to run the climber</td>
+</tr>
+<tr>
+<td>RX</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RY</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RStick Btn</td>
+<td>Button</td>
+<td></td>
+<td>Press and hold to release the gear</td>
+</tr>
+<tr>
+<td>LBumper</td>
+<td>Button</td>
+<td>Intake Reverse</td>
+<td>Hold to run intake backward</td>
+</tr>
+<tr>
+<td>RBumper</td>
+<td>Button</td>
+<td>Intake Forward</td>
+<td>Hold to pull in fuel from the ground via intake</td>
+</tr>
+<tr>
+<td>R Trigger</td>
+<td>Axis</td>
+<td>Shoot</td>
+<td>Tap to turn shooter wheel on to preset shot RPM</td>
+</tr>
+<tr>
+<td>L Trigger</td>
+<td>Axis</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>B</td>
+<td>Button</td>
+<td>Disable Shooter</td>
+<td>Tap to turn off shooter wheel</td>
+</tr>
+<tr>
+<td>A</td>
+<td>Button</td>
+<td>Prep to Shoot</td>
+<td>Hold to inject fuel into the shooter wheel</td>
+</tr>
+<tr>
+<td>Y</td>
+<td>Button</td>
+<td>Shoot</td>
+<td>Tap to turn shooter wheel on to preset shot RPM</td>
+</tr>
+<tr>
+<td>X</td>
+<td>Button</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>POV UP</td>
+<td>POVHAT</td>
+<td>LEDs</td>
+<td>set to both patterns</td>
+</tr>
+<tr>
+<td>POV DN</td>
+<td>POVHAT</td>
+<td>LEDs</td>
+<td>set to no pattern</td>
+</tr>
+<tr>
+<td>POV RT</td>
+<td>POVHAT</td>
+<td>LEDs</td>
+<td>set to gear desired pattern</td>
+</tr>
+<tr>
+<td>POV LF</td>
+<td>POVHAT</td>
+<td>LEDs</td>
+<td>set to fuel desired pattern</td>
+</tr>
+<tr>
+<td>Back</td>
+<td>Button</td>
+<td>Hopper Feed Rev</td>
+<td>Hold to run the hopper feeder backward (regardless of shooter RPM)</td>
+</tr>
+<tr>
+<td>Start</td>
+<td>Button</td>
+<td>Hopper Feed Ovd</td>
+<td>Hold to run the hopper feeder forward (regardless of shooter RPM)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<!-- END Common navigation bar -->
+
+
+</body>
+</html>
+

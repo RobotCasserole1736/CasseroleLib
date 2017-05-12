@@ -75,7 +75,7 @@
 		<fileset file="${networktables.jar}"/>
 		<fileset file="${opencv.jar}"/>
 		<fileset file="${cscore.jar}"/>
-		<fileset dir="${userLibs}" erroronmissingdir="false"/>
+		<fileset dir="${userLibs}" erroronmissingdir="false" includes="*.jar"/>
 	</path>
 
     <pathconvert property="classpathProp" refid="classpath.path"/>
@@ -100,7 +100,7 @@
 
   <echo>[athena-jar] Copying jars to ${build.jars}.</echo>
   <copy todir="${build.jars}" flatten="true">
-    <path refid="classpath.path"/>
+    <path refid="classpath.path"/> 
   </copy>
 
     <jar destfile="${dist.jar}" update="false">
@@ -120,7 +120,7 @@
      To get around this, we're recompiling the entire project, which is not an issue for most teams. If this is an issue
      for you, you can remove the clean here, just be sure to do a full rebuild after you've changed any constants.
      Reference: http://stackoverflow.com/questions/6430001/ant-doesnt-recompile-constants -->
-  <target name="deploy" depends="clean,jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
+  <target name="deploy" depends="clean,jar,get-target-ip,dependencies,web-content-deploy" description="Deploy the jar and start the program running.">
 
     <deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
       <libs.local>
@@ -189,7 +189,7 @@
   </target>
 
   <target name="debug-deploy" depends="jar,get-target-ip,dependencies,web-content-deploy" description="Deploy the jar and start the program running.">
-    <deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}">
+    <deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
       <libs.local>
         <fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
           <include name="**/*.so"/>
@@ -197,7 +197,7 @@
       </libs.local>
     </deploy-libs>
 
-    <deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}">
+    <deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}" libs.deployDir="${libDeploy.dir}">
       <libs.local>
         <fileset dir="${userLibs.dir}">
           <include name="**/*.so"/>

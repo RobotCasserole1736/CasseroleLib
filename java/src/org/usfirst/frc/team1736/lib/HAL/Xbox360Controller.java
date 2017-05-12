@@ -3,16 +3,27 @@ package org.usfirst.frc.team1736.lib.HAL;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Joystick;
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
+
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
 
 /**
  * DESCRIPTION: <br>
@@ -58,6 +69,8 @@ public class Xbox360Controller {
     // -Controller D-Pad POV Hat
     final static int XBOX_DPAD_POV = 0;
 
+    private double deadzone = 0;
+    
     private Joystick joystick; 
 
 
@@ -69,6 +82,15 @@ public class Xbox360Controller {
      */
     public Xbox360Controller(int joystick_id) {
         joystick = new Joystick(joystick_id);
+    }
+    
+    /**
+     * Update the deadzone for all joystick axes
+     * 
+     * @param _deadzone minimum non-zero output to allow from the joystick
+     */
+    public void setDeadzone(double _deadzone){
+    	deadzone = _deadzone;
     }
 
 
@@ -189,7 +211,7 @@ public class Xbox360Controller {
      *         the way to the left.
      */
     public double LStick_X() {
-        return joystick.getRawAxis(XBOX_LSTICK_XAXIS);
+    	return limitDeadzone(joystick.getRawAxis(XBOX_LSTICK_XAXIS));
     }
 
 
@@ -198,7 +220,7 @@ public class Xbox360Controller {
      *         way to the bottom.
      */
     public double LStick_Y() {
-        return -joystick.getRawAxis(XBOX_LSTICK_YAXIS);
+    	return limitDeadzone(-joystick.getRawAxis(XBOX_LSTICK_YAXIS));
     }
 
 
@@ -208,7 +230,7 @@ public class Xbox360Controller {
      *         so pulling both triggers at the same time results in interesting things happening.
      */
     public double LTrigger() {
-        return joystick.getRawAxis(XBOX_LTRIGGER_AXIS);
+        return limitDeadzone(joystick.getRawAxis(XBOX_LTRIGGER_AXIS));
     }
 
 
@@ -218,7 +240,7 @@ public class Xbox360Controller {
      *         so pulling both triggers at the same time results in interesting things happening.
      */
     public double RTrigger() {
-        return joystick.getRawAxis(XBOX_RTRIGGER_AXIS);
+        return limitDeadzone(joystick.getRawAxis(XBOX_RTRIGGER_AXIS));
     }
 
 
@@ -227,7 +249,7 @@ public class Xbox360Controller {
      *         the way to the left.
      */
     public double RStick_X() {
-        return joystick.getRawAxis(XBOX_RSTICK_XAXIS);
+        return limitDeadzone(joystick.getRawAxis(XBOX_RSTICK_XAXIS));
     }
 
 
@@ -236,7 +258,7 @@ public class Xbox360Controller {
      *         way to the bottom.
      */
     public double RStick_Y() {
-        return joystick.getRawAxis(XBOX_RSTICK_YAXIS);
+        return limitDeadzone(joystick.getRawAxis(XBOX_RSTICK_YAXIS));
     }
 
 
@@ -253,7 +275,7 @@ public class Xbox360Controller {
      * @return True if the DPad is pushed up, False if it is not pressed
      */
     public boolean DPadUp() {
-        if (joystick.getPOV(XBOX_DPAD_POV) >= 315 && joystick.getPOV(XBOX_DPAD_POV) <= 45)
+        if ((joystick.getPOV(XBOX_DPAD_POV) >= 315 || joystick.getPOV(XBOX_DPAD_POV) <= 45) && joystick.getPOV(XBOX_DPAD_POV) != -1)
             return true;
         else
             return false;
@@ -290,6 +312,15 @@ public class Xbox360Controller {
             return true;
         else
             return false;
+    }
+    
+    
+    private double limitDeadzone(double input){
+    	if(Math.abs(input) >= deadzone){
+    		return input;
+    	} else {
+    		return 0.0;
+    	}
     }
 
 }

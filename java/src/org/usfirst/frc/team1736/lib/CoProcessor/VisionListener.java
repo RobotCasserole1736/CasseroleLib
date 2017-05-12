@@ -1,21 +1,32 @@
 package org.usfirst.frc.team1736.lib.CoProcessor;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
 import java.util.concurrent.locks.ReentrantLock;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-///////////////////////////////////////////////////////////////////////////////
-//Copyright (c) FRC Team 1736 2016. See the License file.
-//
-//Can you use this code? Sure! We're releasing this under GNUV3, which
-//basically says you can take, modify, share, publish this as much as you
-//want, as long as you don't make it closed source.
-//
-//If you do find it useful, we'd love to hear about it! Check us out at
-//http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
+import edu.wpi.first.wpilibj.Timer;
 
 /**
 * DESCRIPTION: <br>
@@ -49,7 +60,7 @@ public class VisionListener {
     private double EXPECTED_MAX_UPDATE_RATE_HZ = 35.0;
     
     //If this much time goes by without getting a packet, we will start to say the processor is no longer turned on.
-    private long COPROCESSOR_ACTIIVE_TIMEOUT_MS = 3000;
+    private static final double COPROCESSOR_ACTIIVE_TIMEOUT_SEC = 2.0;
     
     // Mutithreading academic dissertation time! 
     // The present and previous observations represent a total set of data which must be updated atomically. 
@@ -58,18 +69,23 @@ public class VisionListener {
     // state - that is to say they are not valid for use by other threads. Therefore, during the whole update process,
     // we must LOCK that critical section so other threads which access either observation. 
     private JSONObject currObservation;
-    private JSONObject prevObservation;
     private ReentrantLock observationLock;
-    private long mostRecentPacketTime;
+    private double mostRecentPacketTime;
     
     //This is the json object which the control system considers as "current". Other observations will continue to be gathered in the background,
     //but this object will not be updated until the control system thread calls the sampleLatestData() method.
     private JSONObject userCurrObservation;
+    private double userCurrPacketRxTime_sys_sec;
+    
+    //Values used for axis M1011
+    double targetWidthFeet = 1.25;
+    int FOVWidthPixel = 640;
+    double tangentTheta = 1.0724;
     
     /**
      * Constructor for the Vision Coprocessor listener socket. Sets up internal variables to get ready
      * for information to be transmitted from the coprocessor.
-     * @param listen_to_addr String of the IP address of the coprocessor (For example, "10.17.36.20")
+     * @param listen_to_addr String of the IP address of the coprocessor (For example, "10.17.36.8")
      * @param listen_on_port integer port number to listen on. Usually between 5800 and 5810 per FMS whitepaper. Must match whatever port the coprocessor is sending information to.
      */
     public VisionListener(String listen_to_addr, int listen_on_port){
@@ -77,7 +93,6 @@ public class VisionListener {
         port = listen_on_port;
         coprocessorActive = false;
         currObservation = new JSONObject();
-        prevObservation = new JSONObject();
         userCurrObservation = new JSONObject();
         parser = new JSONParser();
         observationLock = new ReentrantLock();
@@ -120,13 +135,13 @@ public class VisionListener {
     private void update(){
         String rx_data = listenClient.getPacket();
         
+        
         if(rx_data.length() != 0){
+        	mostRecentPacketTime = Timer.getFPGATimestamp();
             while(observationLock.tryLock()==false){} //lazy man's spinlock
             //Begin critical section
-            prevObservation = currObservation;
             try {
-                currObservation = (JSONObject) parser.parse(rx_data);
-                mostRecentPacketTime = System.currentTimeMillis();
+                currObservation = (JSONObject) parser.parse(rx_data); 
             } catch (ParseException e) {
                 System.out.println("Error: Cannot parse recieved UDP json data: " + e.toString());
                 e.printStackTrace();
@@ -152,13 +167,14 @@ public class VisionListener {
     public void sampleLatestData(){
         while(observationLock.tryLock()==false){} //lazy man's spinlock
         userCurrObservation = currObservation;
-        observationLock.unlock();
+        userCurrPacketRxTime_sys_sec = mostRecentPacketTime;
         
-        if(System.currentTimeMillis() > (mostRecentPacketTime + COPROCESSOR_ACTIIVE_TIMEOUT_MS)){
+        if(Timer.getFPGATimestamp() > (mostRecentPacketTime + COPROCESSOR_ACTIIVE_TIMEOUT_SEC)){
             coprocessorActive = false;
         } else {
             coprocessorActive = true;
         }
+        observationLock.unlock();
     }
     
     private double genericDoubleGet(String objname){
@@ -183,6 +199,18 @@ public class VisionListener {
             JSONArray tmp = (JSONArray) userCurrObservation.get(objname);
             if(tmp.size() > idx){
                 val = ((Long)tmp.get(idx)).doubleValue();
+            }
+        } 
+        return val;
+    }
+    
+    private double genericAlreadyDouble1DArrayIndexGet(String objname, int idx){
+        double val = -1.0;
+        
+        if(userCurrObservation.containsKey(objname)){
+            JSONArray tmp = (JSONArray) userCurrObservation.get(objname);
+            if(tmp.size() > idx){
+                val = (double)tmp.get(idx);
             }
         } 
         return val;
@@ -237,7 +265,7 @@ public class VisionListener {
      * @return Enclosed area of the specified target observed in frame, or -1 if no target matches provided index.
      */
     public double getArea(int tgt_idx){
-        return genericDouble1DArrayIndexGet("boundedAreas",tgt_idx);
+        return genericAlreadyDouble1DArrayIndexGet("boundedAreas",tgt_idx);
     }
 
     /**
@@ -289,6 +317,13 @@ public class VisionListener {
      */
     public double getMemLoad(){
         return genericDoubleGet("memLoad");
+    }
+    
+    /**
+     * @return RIO System time when the most recent packet was received.
+     */
+    public double getPacketRxSystemTime(){
+    	return (double)userCurrPacketRxTime_sys_sec;
     }
     
     ///////////////////////////////////////////////////////////////////////////

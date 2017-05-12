@@ -1,6 +1,28 @@
 package org.usfirst.frc.team1736.lib.AutoSequencer;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
 import java.util.ArrayList;
+
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * Casserole Autonomous mode event sequencer. Provides an infrastructure for defining autonomous
@@ -30,6 +52,12 @@ public class AutoSequencer {
      */
     public static void addEvent(AutoEvent event_in) {
         events.add(event_in);
+        System.out.println("[Auto] New event registered - " + event_in.getClass().getName());
+    }
+    
+    public static void clearAllEvents() {
+        events.clear();
+        System.out.println("[Auto] Cleared event list");
     }
 
 
@@ -39,9 +67,13 @@ public class AutoSequencer {
     public static void start() {
         globalEventIndex = 0;
         globalUpdateCount = 0;
+        
+        System.out.println("[Auto] Starting...");
 
         if (events.size() > 0) {
             activeEvent = events.get(globalEventIndex);
+            System.out.println("[Auto] Starting new auto event " + activeEvent.getClass().getName());
+            activeEvent.userStart();
         }
     }
 
@@ -58,6 +90,7 @@ public class AutoSequencer {
             activeEvent.forceStopAllChildren();
             activeEvent.userForceStop();
         }
+        System.out.println("[Auto] Stopping...");
 
         // Set activeEvent to nothing running state.
         activeEvent = null;
@@ -68,15 +101,6 @@ public class AutoSequencer {
 
         // Don't bother to do anything if there is no active event right now.
         if (activeEvent != null) {
-            // See what our current event is.
-            if (globalEventIndex >= events.size()) {
-                // terminal condition. we have no more states to run. Stop running things.
-                activeEvent = null;
-                return;
-            } else {
-                // update the active event.
-                activeEvent = events.get(globalEventIndex);
-            }
 
             // Update the active event. This will probably set motors or stuff like that.
             activeEvent.update();
@@ -104,14 +128,34 @@ public class AutoSequencer {
             // Check if active event has completed. Move on to the next one if this one is done.
             // Note this sequence guarantees each event's update is called at least once.
             if (activeEvent.isDone()) {
+            	//This event is done - determine if we are done with auto, or need to do the next event.
+            	
                 activeEvent.forceStopAllChildren(); // Just in case the user is sloppy and leaves
                                                     // child events running when the parent
                                                     // finishes.
                 globalEventIndex++;
+                
+                // See what our new current event is.
+                if (globalEventIndex >= events.size()) {
+                    // terminal condition. we have no more states to run. Stop running things.
+                    activeEvent = null;
+                    System.out.println("[Auto] Finished all events in sequence.");
+                    return;
+                } 
+                
+                activeEvent = events.get(globalEventIndex);
+                System.out.println("[Auto] Starting new auto event " + activeEvent.getClass().getName());
+                activeEvent.userStart();
             }
+            
+        if(globalUpdateCount % 50 == 0){
+        	System.out.println("[Auto] Running. timestep = " + Double.toString(globalUpdateCount*0.02) + "s | ActualTime = " + Double.toString(Timer.getFPGATimestamp()));
+        }
+
 
         }
         globalUpdateCount++;
+        
 
     }
 

@@ -1,5 +1,27 @@
 package org.usfirst.frc.team1736.lib.Sensors;
 
+
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
+
 import java.util.Arrays; // For median filter sorting
 import java.util.TimerTask; // For multithreading support
 import edu.wpi.first.wpilibj.I2C; // FRC's internal I2C libraries for the RoboRio
@@ -63,6 +85,7 @@ public class L3G4200DGyro {
     private static final int CTRL_REG4_ADDR = 0x23;
     private static final int CTRL_REG5_ADDR = 0x24;
     private static final int OUTZ_L_REG_ADDR = 0x2C;
+    @SuppressWarnings("unused")
     private static final int OUTZ_H_REG_ADDR = 0x2D;
 
     // desired gyro settings
@@ -133,14 +156,6 @@ public class L3G4200DGyro {
     private boolean gyro_initalized = false;
 
     private long system_time_at_last_call = 0;
-
-    // To calculate the integral, we have a small state machine. In order to
-    // make sure the state machine gets properly initalize, we will need to
-    // run some special code the first time the periodic update funciton is called.
-    // This variable keeps track of whether we've called the code or not yet.
-    // It starts false, and then gets set to true as soon as we've run the periodic
-    // code once. It stays true until the software is restarted.
-    private boolean periodic_called_once = false;
 
     // Gyro integration mode: 0 = linear interpolation, 1 = simpson's method
     private static final int integration_method = 1;
@@ -354,7 +369,7 @@ public class L3G4200DGyro {
         // Will start calling the periodic update function at an interval of m_sample_period_ms,
         // asynchronously from any other code.
         // Java magic here, don't touch!
-        timerThread = new java.util.Timer();
+        timerThread = new java.util.Timer("L3G4200D Gyro Driver");
         timerThread.schedule(new GyroTask(this), 0L, (long) (m_sample_period_ms));
 
 
@@ -470,7 +485,7 @@ public class L3G4200DGyro {
     // It commands a gyro read, scales the raw data to degrees/sec, and then calculates the current
     // angle
     // using the desired integration method
-    @SuppressWarnings("unused") // suppress compiler warnings because I swear, we do actually use
+    @SuppressWarnings("all")    // suppress compiler warnings because I swear, we do actually use
                                 // this function.
     private void periodic_update() {
         long cur_period_start_time = System.nanoTime(); // Record the time the current sample is

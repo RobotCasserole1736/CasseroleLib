@@ -1,20 +1,31 @@
 package org.usfirst.frc.team1736.lib.CasserolePID;
 
+/*
+ *******************************************************************************************
+ * Copyright (C) 2017 FRC Team 1736 Robot Casserole - www.robotcasserole.org
+ *******************************************************************************************
+ *
+ * This software is released under the MIT Licence - see the license.txt
+ *  file in the root of this repo.
+ *
+ * Non-legally-binding statement from Team 1736:
+ *  Thank you for taking the time to read through our software! We hope you
+ *   find it educational and informative! 
+ *  Please feel free to snag our software for your own use in whatever project
+ *   you have going on right now! We'd love to be able to help out! Shoot us 
+ *   any questions you may have, all our contact info should be on our website
+ *   (listed above).
+ *  If you happen to end up using our software to make money, that is wonderful!
+ *   Robot Casserole is always looking for more sponsors, so we'd be very appreciative
+ *   if you would consider donating to our club to help further STEM education.
+ */
+
+
 import java.util.Timer;
 import java.util.TimerTask;
 import org.usfirst.frc.team1736.lib.SignalMath.DerivativeCalculator;
 import org.usfirst.frc.team1736.lib.SignalMath.IntegralCalculator;
 
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) FRC Team 1736 2016. See the License file.
-//
-// Can you use this code? Sure! We're releasing this under GNUV3, which
-// basically says you can take, modify, share, publish this as much as you
-// want, as long as you don't make it closed source.
-//
-// If you do find it useful, we'd love to hear about it! Check us out at
-// http://robotcasserole.org/ and leave us a message!
-///////////////////////////////////////////////////////////////////////////////
 
 /**
  * DESCRIPTION: <br>
@@ -70,10 +81,14 @@ public abstract class CasserolePID {
     protected double Kf; // Setpoint Feed-Forward
     protected double Kdf; // Setpoint Derivative Feed-Forward
     protected double Kp2; // Proportional Squared
+    
+    protected double curError; 
 
     protected boolean useErrForDerivTerm; // If true, derivative term is calculated using the error
                                           // signal. Otherwise, use the "actual" value from the PID
                                           // system.
+    protected boolean invertOutput = false; // If true, we will use the opposite sign at the output.
+    protected boolean invertActual = false; // If true, we will use the opposite sign when reading the input.
 
     // Things for doing math
     DerivativeCalculator dTermDeriv;
@@ -99,7 +114,9 @@ public abstract class CasserolePID {
     // An external obesrver can check this for positive verification the
     // PID loop is still alive.
     protected volatile long watchdogCounter;
-
+    
+    //For debugging, expose the ability to name the thread this runs in
+    public String threadName = "Casserole PID Update";
 
     /**
      * Simple Constructor
@@ -108,7 +125,7 @@ public abstract class CasserolePID {
      * @param Ki_in Integral Term Gain
      * @param Kd_in Derivative Term Gain
      */
-    CasserolePID(double Kp_in, double Ki_in, double Kd_in) {
+    protected CasserolePID(double Kp_in, double Ki_in, double Kd_in) {
         Kp = Kp_in;
         Ki = Ki_in;
         Kd = Kd_in;
@@ -129,7 +146,7 @@ public abstract class CasserolePID {
      * @param Kdf_in Setpoint Derivative Feed-Forward Term Gain
      * @param Kp2_in Proportional Squared Term Gain
      */
-    CasserolePID(double Kp_in, double Ki_in, double Kd_in, double Kf_in, double Kdf_in, double Kp2_in) {
+    protected CasserolePID(double Kp_in, double Ki_in, double Kd_in, double Kf_in, double Kdf_in, double Kp2_in) {
         Kp = Kp_in;
         Ki = Ki_in;
         Kd = Kd_in;
@@ -156,8 +173,6 @@ public abstract class CasserolePID {
 
         setpoint = 0;
 
-        timerThread = new java.util.Timer();
-
     }
 
 
@@ -172,6 +187,7 @@ public abstract class CasserolePID {
         // Will start calling the periodic update function at an interval of pidSamplePeriod_ms,
         // asynchronously from any other code.
         // Java magic here, don't touch!
+        timerThread = new java.util.Timer(threadName);
         timerThread.scheduleAtFixedRate(new PIDTask(this), 0L, (long) (pidSamplePeriod_ms));
     }
 
@@ -199,6 +215,27 @@ public abstract class CasserolePID {
      */
     public void setSetpoint(double setpoint_in) {
         setpoint = setpoint_in;
+    }
+    
+    
+    /**
+     * Sets the control effort to be inverted from the normal calculation
+     * @param inv
+     */
+    public void setOutputInverted(boolean inv){
+    	invertOutput = inv;
+    }
+    
+    /**
+     * Sets the sensor input (actual) to be inverted in the normal calculation
+     * @param inv
+     */
+    public void setSensorInverted(boolean inv){
+    	invertActual = inv;
+    }
+    
+    public double getCurError(){
+    	return curError;
     }
 
 
@@ -230,9 +267,14 @@ public abstract class CasserolePID {
     // The big kahuna. This is where the magic happens.
     protected void periodicUpdate() {
         double curInput = returnPIDInput();
+        
+        if(invertActual){
+        	curInput = -1.0 * curInput;
+        }
+        
         double curOutput = 0.0;
         double curSetpoint = setpoint; // latch the setpoint at start of loop
-        double curError = curSetpoint - curInput;
+        curError = curSetpoint - curInput;
 
 
         // Calculate P term
@@ -273,6 +315,10 @@ public abstract class CasserolePID {
         }
 
 
+        if(invertOutput){
+        	curOutput = curOutput * -1.0;
+        }
+        
         // Assign output
         if (curOutput > outputMax) {
             usePIDOutput(outputMax);
