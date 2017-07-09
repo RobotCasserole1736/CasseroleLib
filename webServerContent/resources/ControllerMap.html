@@ -5,10 +5,12 @@
 
 <head>
   <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="table_highlight.css">
 </head>
 
 <body>
 
+<div id="CtrlMapAllTables">
 <h1>FRC 1736 Robot Casserole</h1>
 <div>
 <p>
@@ -16,17 +18,11 @@ These are the controls for the FRC 1736 robot.
 </p>
 </div>
 
-<!-- Common navigation bar -->
 <hr>
-<p>
+<h2>
 Driver 1 (Drivetrain) - Xbox Controller
-</p>
+</h2>
 
-<style>
-table, th, td{
-	border: 1px solid black;	
-}
-</style>
 <table>
 <thead>
 <tr>
@@ -151,24 +147,15 @@ table, th, td{
 <td>Run Air Compressor</td>
 <td>Enables the air compressor</td>
 </tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
 </tbody>
 </table>
 
-<p>
+
+<hr>
+
+<h2>
 Driver 2 (Manipulators) - Xbox Controller
-</p>
+</h2>
 
 <table>
 <thead>
@@ -294,20 +281,22 @@ Driver 2 (Manipulators) - Xbox Controller
 <td>Hopper Feed Ovd</td>
 <td>Hold to run the hopper feeder forward (regardless of shooter RPM)</td>
 </tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
 </tbody>
 </table>
+</div>
+
+
+<!-- Common navigation bar -->
+<div id="navbar">
+<p>
+<a href="index.html">Home</a>
+<a href="presentState.html">State Data</a>   
+<a href="calibration.html">Calibration</a>
+<a href="driverView.html">Driver View</a>
+<a href="rtplot.html">Plot View</a>
+<a href="ControllerMap.html">Controller Map</a>
+</p>
+</div>
 <!-- END Common navigation bar -->
 
 

@@ -1,6 +1,7 @@
 
-var hostname = "roboRIO-1736-FRC.local:5805" //Robot hostname
-//var hostname = "localhost:5805" //Local Hostname
+//Note - this PORT string must be aligned with the port the webserver is served on.
+var port = "5805";
+var hostname = window.location.hostname+":"+port;
 
 var dataSocket = new WebSocket("ws://"+hostname+"/statestream")
 var numTransmissions = 0;

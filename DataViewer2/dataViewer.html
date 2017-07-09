@@ -19,7 +19,7 @@
 </style>
 
 
-<title>Data Log Viewer</title>
+<title>Local Data Log Viewer</title>
 
 <head>
 	<link rel="stylesheet" href="main.css">
@@ -35,15 +35,19 @@
 
 <div class="container">
 	<header>
-		<h2>Data Log Viewer</h2>
+		<h2>Local Data Log Viewer</h2>
 	</header>
+    
+    <hr>
 
 	<aside>
 		
 		<div>
 			Choose file: <input type="file" id="files" value="../logFileSnagger/downloaded_logs" onchange="handleFileSelect(this.files)" accept=".csv" autofocus="autofocus" />
 		</div>
-
+        
+        <hr>
+        
 		<div>
 			<input type="button" value="Clear All"             onclick="hideAll()">
 			<input type="button" value="Input Power"           onclick="setPreset(0)">
@@ -64,10 +68,12 @@
 	</aside>
 
 	<article>
-		<div id="container" style="width:100%; height:1200px;"></div>
+        <hr>
+		<div id="container" style="width:100%; height:1200px;border-style: solid; border-width: 3px; border-color: #999; background-color:black"></div>
 	</article>
 
-
+    <hr>
+    
 	<footer>FRC 1736 Robot Casserole</footer>
 
 </div>

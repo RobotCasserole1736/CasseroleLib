@@ -27,16 +27,60 @@ var dflt_options =  {
 			renderTo: 'container',
 			animation: false,
 			ignoreHiddenSeries: true,
+            resetZoomButton: {
+                position: {
+                    align: 'left',
+                },
+                theme: {
+                    fill: '#822',
+                    stroke: '#999',
+                    r: 3,
+                    style: {
+                        color: '#999'
+                    },
+                    states: {
+                        hover: {
+                            fill: '#782828',
+                            style: {
+                                color: '#ccc'
+                            },
+                        },
+                    },
+                },
+            },
 			panning: true,
 			panKey: 'shift',
-			showAxes: true
+			showAxes: true,
+            backgroundColor: {
+                linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                stops: [
+                    [0, 'rgb(0, 0, 0)'], //Yes, both black. Just in case I decide to change back....
+                    [1, 'rgb(0, 0, 0)']
+                ]
+            },
 		},
 		title: {
 			text: ''
 		},
+        
 		xAxis: {
 			type: 'linear',
-			title: 'seconds (since boot)'
+			title: 'Time (sec)',
+            lineColor: '#777',
+            tickColor: '#444',
+            gridLineColor: '#444',
+            gridLineWidth: 1,
+            labels: {
+                style: {
+                    color: '#DDD',
+                    fontWeight: 'bold'
+                },
+            },
+            title: {
+                style: {
+                    color: '#D43',
+                },
+            },
 		},
 		
 		yAxis: [],
@@ -45,7 +89,14 @@ var dflt_options =  {
 			enabled: true,
 			itemMarginBottom: 2,
 			itemMarginTop: 2,
-			itemWidth: 300
+			itemWidth: 300,
+            itemStyle: {
+                font: '9pt Trebuchet MS, Verdana, sans-serif',
+                color: '#DDD'
+            },
+            itemHoverStyle:{
+                color: 'gray'
+            }  
 			
 		},
 		
@@ -53,11 +104,8 @@ var dflt_options =  {
 			enabled: false
 		},
 		
-		colors: ['#7cb5ec', '#43A348', '#90ed7d', '#f7a30c', '#8085e9', '#f15c80', '#e4d354', '#2b608f', '#a45b5b', '#91efe1',
-		         '#6cb5ec', '#43C348', '#90ed7d', '#f6a34c', '#8085e9', '#315c90', '#e4d354', '#2b908f', '#345bfb', '#61e8e1',
-				 '#5cb5ec', '#43F348', '#90ed7d', '#f7a38c', '#8085e9', '#f18c80', '#e4d354', '#2b208f', '#f45b5b', '#91e8e1',
-				 '#4cb5ec', '#43B348', '#90ed7d', '#f7a3Ac', '#8085e9', '#f12c80', '#e4d054', '#2bF08f', '#a45bfb', '#41e851',
-				 '#3cb5ec', '#430348', '#90ed7d', '#f7a3Fc', '#8099e9', '#f15c50', '#e4d354'
+		colors: ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#88FF00', '#8800FF', '#0088FF', '#FF8800',
+		         '#FF0088', '#00FF88',
                 ],
    
 		plotOptions: {
@@ -75,14 +123,17 @@ var dflt_options =  {
 			hideDelay: 0,
 			shared: true,
 			backgroundColor: null,
-			borderWidth: 0,
+            snap: 30,
+			borderWidth: 1,
+            borderColor: '#FF0000',
 			shadow: true,
 			animation: false,
 			useHTML: false,
 			style: {
-					padding: 0
-				}
+                padding: 0,
+                color: '#D43',
             },
+        },
 
 		series: []
 	}
@@ -129,7 +180,12 @@ function handleFileSelect(files_in) {
                                               data:[],
                                               visible:false,
                                               visibility_counter:0,
-                                              yAxis:0 //temp, will be updated once the actual unit is read.
+                                              yAxis:0, //temp, will be updated once the actual unit is read.
+                                              states: {
+                                                  hover: {
+                                                      enabled: false
+                                                  },
+                                              },
                                              });
                             plotter_index++;
                         }
@@ -147,7 +203,26 @@ function handleFileSelect(files_in) {
                             temp_series[plotter_index].name = temp_series[plotter_index].name + ' (' + unit + ')';
                             if(!(unit in units_to_yaxis_index)){
                                 units_to_yaxis_index[unit] = yaxis_index;
-                                options.yAxis.push({title:{text:unit}, showEmpty:false});
+                                options.yAxis.push({
+                                                        title:{
+                                                            text:unit,
+                                                            style: {
+                                                                color: '#DDD',
+                                                            },
+                                                        }, 
+                                                        showEmpty:false,
+                                                        lineColor: '#777',
+                                                        tickColor: '#444',
+                                                        gridLineColor: '#444',
+                                                        gridLineWidth: 1,
+                                                        labels: {
+                                                            style: {
+                                                                color: '#DDD',
+                                                                fontWeight: 'bold'
+                                                            },
+                                                        },
+                                
+                                                    });
                                 yaxis_index++;
                             }
                             temp_series[plotter_index].yAxis = units_to_yaxis_index[unit];
